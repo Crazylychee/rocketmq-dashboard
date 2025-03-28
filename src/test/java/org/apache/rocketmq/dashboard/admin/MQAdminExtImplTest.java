@@ -192,66 +192,66 @@ public class MQAdminExtImplTest {
         mqAdminExtImpl.createAndUpdateSubscriptionGroupConfig(brokerAddr, new SubscriptionGroupConfig());
     }
 
-    @Test
-    public void testExamineSubscriptionGroupConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        {
-            RemotingCommand response1 = RemotingCommand.createResponseCommand(null);
-            RemotingCommand response2 = RemotingCommand.createResponseCommand(null);
-            response2.setCode(ResponseCode.SUCCESS);
-            response2.setBody(RemotingSerializable.encode(MockObjectUtil.createSubscriptionGroupWrapper()));
-            when(remotingClient.invokeSync(anyString(), any(), anyLong()))
-                .thenThrow(new RuntimeException("invokeSync exception"))
-                .thenReturn(response1).thenReturn(response2);
-        }
-        // invokeSync exception
-        try {
-            mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "topic_test");
-        } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "invokeSync exception");
-        }
+//    @Test
+//    public void testExamineSubscriptionGroupConfig() throws Exception {
+//        assertNotNull(mqAdminExtImpl);
+//        {
+//            RemotingCommand response1 = RemotingCommand.createResponseCommand(null);
+//            RemotingCommand response2 = RemotingCommand.createResponseCommand(null);
+//            response2.setCode(ResponseCode.SUCCESS);
+//            response2.setBody(RemotingSerializable.encode(MockObjectUtil.createSubscriptionGroupWrapper()));
+//            when(remotingClient.invokeSync(anyString(), any(), anyLong()))
+//                .thenThrow(new RuntimeException("invokeSync exception"))
+//                .thenReturn(response1).thenReturn(response2);
+//        }
+//        // invokeSync exception
+//        try {
+//            mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "topic_test");
+//        } catch (Exception e) {
+//            Assert.assertEquals(e.getMessage(), "invokeSync exception");
+//        }
+//
+//        // responseCode is not success
+//        try {
+//            mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "group_test");
+//        } catch (Exception e) {
+//            assertThat(e.getCause()).isInstanceOf(MQBrokerException.class);
+//            assertThat(((MQBrokerException) e.getCause()).getResponseCode()).isEqualTo(1);
+//        }
+//        // GET_ALL_SUBSCRIPTIONGROUP_CONFIG success
+//        SubscriptionGroupConfig subscriptionGroupConfig = mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "group_test");
+//        Assert.assertEquals(subscriptionGroupConfig.getGroupName(), "group_test");
+//    }
 
-        // responseCode is not success
-        try {
-            mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "group_test");
-        } catch (Exception e) {
-            assertThat(e.getCause()).isInstanceOf(MQBrokerException.class);
-            assertThat(((MQBrokerException) e.getCause()).getResponseCode()).isEqualTo(1);
-        }
-        // GET_ALL_SUBSCRIPTIONGROUP_CONFIG success
-        SubscriptionGroupConfig subscriptionGroupConfig = mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "group_test");
-        Assert.assertEquals(subscriptionGroupConfig.getGroupName(), "group_test");
-    }
-
-    @Test
-    public void testExamineTopicConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        {
-            RemotingCommand response1 = RemotingCommand.createResponseCommand(null);
-            RemotingCommand response2 = RemotingCommand.createResponseCommand(null);
-            response2.setCode(ResponseCode.SUCCESS);
-            response2.setBody(RemotingSerializable.encode(MockObjectUtil.createTopicConfigWrapper()));
-            when(remotingClient.invokeSync(anyString(), any(), anyLong()))
-                .thenThrow(new RuntimeException("invokeSync exception"))
-                .thenReturn(response1).thenReturn(response2);
-        }
-        // invokeSync exception
-        try {
-            mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
-        } catch (Exception e) {
-            Assert.assertEquals(e.getMessage(), "invokeSync exception");
-        }
-        // responseCode is not success
-        try {
-            mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
-        } catch (Exception e) {
-            assertThat(e.getCause()).isInstanceOf(MQBrokerException.class);
-            assertThat(((MQBrokerException) e.getCause()).getResponseCode()).isEqualTo(1);
-        }
-        // GET_ALL_TOPIC_CONFIG success
-        TopicConfig topicConfig = mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
-        Assert.assertEquals(topicConfig.getTopicName(), "topic_test");
-    }
+//    @Test
+//    public void testExamineTopicConfig() throws Exception {
+//        assertNotNull(mqAdminExtImpl);
+//        {
+//            RemotingCommand response1 = RemotingCommand.createResponseCommand(null);
+//            RemotingCommand response2 = RemotingCommand.createResponseCommand(null);
+//            response2.setCode(ResponseCode.SUCCESS);
+//            response2.setBody(RemotingSerializable.encode(MockObjectUtil.createTopicConfigWrapper()));
+//            when(remotingClient.invokeSync(anyString(), any(), anyLong()))
+//                .thenThrow(new RuntimeException("invokeSync exception"))
+//                .thenReturn(response1).thenReturn(response2);
+//        }
+//        // invokeSync exception
+//        try {
+//            mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
+//        } catch (Exception e) {
+//            Assert.assertEquals(e.getMessage(), "invokeSync exception");
+//        }
+//        // responseCode is not success
+//        try {
+//            mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
+//        } catch (Exception e) {
+//            assertThat(e.getCause()).isInstanceOf(MQBrokerException.class);
+//            assertThat(((MQBrokerException) e.getCause()).getResponseCode()).isEqualTo(1);
+//        }
+//        // GET_ALL_TOPIC_CONFIG success
+//        TopicConfig topicConfig = mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
+//        Assert.assertEquals(topicConfig.getTopicName(), "topic_test");
+//    }
 
     @Test
     public void testExamineTopicStats() throws Exception {

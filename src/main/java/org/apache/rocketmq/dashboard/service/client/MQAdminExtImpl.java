@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import org.apache.rocketmq.client.QueryResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
+import org.apache.rocketmq.client.impl.MQAdminImpl;
 import org.apache.rocketmq.common.AclConfig;
 import org.apache.rocketmq.common.PlainAccessConfig;
 import org.apache.rocketmq.common.TopicConfig;
@@ -70,6 +71,7 @@ import org.apache.rocketmq.tools.admin.MQAdminExt;
 import org.apache.rocketmq.tools.admin.api.BrokerOperatorResult;
 import org.apache.rocketmq.tools.admin.api.MessageTrack;
 import org.apache.rocketmq.tools.admin.common.AdminToolResult;
+import org.joor.Reflect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -457,25 +459,22 @@ public class MQAdminExtImpl implements MQAdminExt {
     //https://github.com/apache/incubator-rocketmq/pull/69
     @Override
     public MessageExt viewMessage(String topic,
-        String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+                                  String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         logger.info("MessageClientIDSetter.getNearlyTimeFromID(msgId)={} msgId={}", MessageClientIDSetter.getNearlyTimeFromID(msgId), msgId);
         try {
             return viewMessage(msgId);
         }
         catch (Exception e) {
         }
-
-        Set<String> clusterList = MQAdminInstance.threadLocalMQAdminExt().getTopicClusterList(topic);
-        if (clusterList == null || clusterList.isEmpty()) {
-            return MQAdminInstance.threadLocalMQAdminExt().queryMessage("", topic, msgId);
+        MQAdminImpl mqAdminImpl = MQAdminInstance.threadLocalMqClientInstance().getMQAdminImpl();
+        QueryResult qr = Reflect.on(mqAdminImpl).call("queryMessage", topic, msgId, 32,
+                MessageClientIDSetter.getNearlyTimeFromID(msgId).getTime() - 1000 * 60 * 60 * 13L, Long.MAX_VALUE, true).get();
+        if (qr != null && qr.getMessageList() != null && qr.getMessageList().size() > 0) {
+            return qr.getMessageList().get(0);
         }
-        for (String name : clusterList) {
-            MessageExt messageExt = MQAdminInstance.threadLocalMQAdminExt().queryMessage(name, topic, msgId);
-            if (messageExt != null) {
-                return messageExt;
-            }
+        else {
+            return null;
         }
-        return null;
     }
 
     @Override

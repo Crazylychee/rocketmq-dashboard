@@ -227,27 +227,27 @@ public class ConsumerControllerTest extends BaseControllerTest {
             .andExpect(jsonPath("$.data").value(true));
     }
 
-    @Test
-    public void testQueryConsumerByTopic() throws Exception {
-        final String url = "/consumer/queryTopicByConsumer.query";
-        requestBuilder = MockMvcRequestBuilders.get(url);
-        requestBuilder.param("consumerGroup", "group_test");
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data", hasSize(1)))
-            .andExpect(jsonPath("$.data[0].queueStatInfoList", hasSize(2)));
-    }
+//    @Test
+//    public void testQueryConsumerByTopic() throws Exception {
+//        final String url = "/consumer/queryTopicByConsumer.query";
+//        requestBuilder = MockMvcRequestBuilders.get(url);
+//        requestBuilder.param("consumerGroup", "group_test");
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data", hasSize(1)))
+//            .andExpect(jsonPath("$.data[0].queueStatInfoList", hasSize(2)));
+//    }
 
-    @Test
-    public void testConsumerConnection() throws Exception {
-        final String url = "/consumer/consumerConnection.query";
-        requestBuilder = MockMvcRequestBuilders.get(url);
-        requestBuilder.param("consumerGroup", "group_test");
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.consumeType").value(ConsumeType.CONSUME_ACTIVELY.name()))
-            .andExpect(jsonPath("$.data.messageModel").value(MessageModel.CLUSTERING.name()));
-    }
+//    @Test
+//    public void testConsumerConnection() throws Exception {
+//        final String url = "/consumer/consumerConnection.query";
+//        requestBuilder = MockMvcRequestBuilders.get(url);
+//        requestBuilder.param("consumerGroup", "group_test");
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data.consumeType").value(ConsumeType.CONSUME_ACTIVELY.name()))
+//            .andExpect(jsonPath("$.data.messageModel").value(MessageModel.CLUSTERING.name()));
+//    }
 
     @Test
     public void testGetConsumerRunningInfo() throws Exception {

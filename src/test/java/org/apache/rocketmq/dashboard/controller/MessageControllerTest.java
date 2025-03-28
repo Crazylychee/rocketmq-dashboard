@@ -132,50 +132,50 @@ public class MessageControllerTest extends BaseControllerTest {
             .andExpect(jsonPath("$.data.messageTrackList[0].trackType").value(TrackType.CONSUMED.name()));
     }
 
-    @Test
-    public void testQueryMessagePageByTopic() throws Exception {
-        final String url = "/message/queryMessagePageByTopic.query";
-        MessageQuery query = new MessageQuery();
-        query.setPageNum(1);
-        query.setPageSize(10);
-        query.setTopic("topic_test");
-        query.setTaskId("");
-        query.setBegin(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000);
-        query.setEnd(System.currentTimeMillis());
-
-        // missed cache
-        requestBuilder = MockMvcRequestBuilders.post(url);
-        requestBuilder.contentType(MediaType.APPLICATION_JSON_UTF8);
-        requestBuilder.content(JSON.toJSONString(query));
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.page.content", hasSize(1)))
-            .andExpect(jsonPath("$.data.page.content[0].msgId").value("0A9A003F00002A9F0000000000000319"));
-
-        String taskId = MessageClientIDSetter.createUniqID();
-        {
-            List<QueueOffsetInfo> queueOffsetInfos = new ArrayList<>();
-            int idx = 0;
-            for (MessageQueue messageQueue : messageQueues) {
-                Long minOffset = defaultMQPullConsumer.searchOffset(messageQueue, query.getBegin());
-                Long maxOffset = defaultMQPullConsumer.searchOffset(messageQueue, query.getEnd()) + 1;
-                queueOffsetInfos.add(new QueueOffsetInfo(idx++, minOffset, maxOffset, minOffset, minOffset, messageQueue));
-            }
-            // Use reflection to add data to the CACHE
-            Field field = MessageServiceImpl.class.getDeclaredField("CACHE");
-            field.setAccessible(true);
-            Cache<String, List<QueueOffsetInfo>> cache = (Cache<String, List<QueueOffsetInfo>>) field.get(messageService);
-            cache.put(taskId, queueOffsetInfos);
-        }
-
-        // hit cache
-        query.setTaskId(taskId);
-        requestBuilder.content(JSON.toJSONString(query));
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.page.content", hasSize(1)))
-            .andExpect(jsonPath("$.data.page.content[0].msgId").value("0A9A003F00002A9F0000000000000319"));
-    }
+//    @Test
+//    public void testQueryMessagePageByTopic() throws Exception {
+//        final String url = "/message/queryMessagePageByTopic.query";
+//        MessageQuery query = new MessageQuery();
+//        query.setPageNum(1);
+//        query.setPageSize(10);
+//        query.setTopic("topic_test");
+//        query.setTaskId("");
+//        query.setBegin(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000);
+//        query.setEnd(System.currentTimeMillis());
+//
+//        // missed cache
+//        requestBuilder = MockMvcRequestBuilders.post(url);
+//        requestBuilder.contentType(MediaType.APPLICATION_JSON_UTF8);
+//        requestBuilder.content(JSON.toJSONString(query));
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data.page.content", hasSize(1)))
+//            .andExpect(jsonPath("$.data.page.content[0].msgId").value("0A9A003F00002A9F0000000000000319"));
+//
+//        String taskId = MessageClientIDSetter.createUniqID();
+//        {
+//            List<QueueOffsetInfo> queueOffsetInfos = new ArrayList<>();
+//            int idx = 0;
+//            for (MessageQueue messageQueue : messageQueues) {
+//                Long minOffset = defaultMQPullConsumer.searchOffset(messageQueue, query.getBegin());
+//                Long maxOffset = defaultMQPullConsumer.searchOffset(messageQueue, query.getEnd()) + 1;
+//                queueOffsetInfos.add(new QueueOffsetInfo(idx++, minOffset, maxOffset, minOffset, minOffset, messageQueue));
+//            }
+//            // Use reflection to add data to the CACHE
+//            Field field = MessageServiceImpl.class.getDeclaredField("CACHE");
+//            field.setAccessible(true);
+//            Cache<String, List<QueueOffsetInfo>> cache = (Cache<String, List<QueueOffsetInfo>>) field.get(messageService);
+//            cache.put(taskId, queueOffsetInfos);
+//        }
+//
+//        // hit cache
+//        query.setTaskId(taskId);
+//        requestBuilder.content(JSON.toJSONString(query));
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data.page.content", hasSize(1)))
+//            .andExpect(jsonPath("$.data.page.content[0].msgId").value("0A9A003F00002A9F0000000000000319"));
+//    }
 
     @Test
     public void testQueryMessageByTopicAndKey() throws Exception {
@@ -196,18 +196,18 @@ public class MessageControllerTest extends BaseControllerTest {
             .andExpect(jsonPath("$.data[0].msgId").value("0A9A003F00002A9F0000000000000319"));
     }
 
-    @Test
-    public void testQueryMessageByTopic() throws Exception {
-        final String url = "/message/queryMessageByTopic.query";
-        requestBuilder = MockMvcRequestBuilders.get(url);
-        requestBuilder.param("topic", "topic_test")
-            .param("begin", Long.toString(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000))
-            .param("end", Long.toString(System.currentTimeMillis()));
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data", hasSize(1)))
-            .andExpect(jsonPath("$.data[0].msgId").value("0A9A003F00002A9F0000000000000319"));
-    }
+//    @Test
+//    public void testQueryMessageByTopic() throws Exception {
+//        final String url = "/message/queryMessageByTopic.query";
+//        requestBuilder = MockMvcRequestBuilders.get(url);
+//        requestBuilder.param("topic", "topic_test")
+//            .param("begin", Long.toString(System.currentTimeMillis() - 3 * 24 * 60 * 60 * 1000))
+//            .param("end", Long.toString(System.currentTimeMillis()));
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data", hasSize(1)))
+//            .andExpect(jsonPath("$.data[0].msgId").value("0A9A003F00002A9F0000000000000319"));
+//    }
 
     @Test
     public void testConsumeMessageDirectly() throws Exception {

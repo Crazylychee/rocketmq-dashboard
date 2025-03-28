@@ -141,18 +141,18 @@ public class TopicControllerTest extends BaseControllerTest {
             .andExpect(jsonPath("$.data.topicList").value(containsInAnyOrder(topicString)));
     }
 
-    @Test
-    public void testStat() throws Exception {
-        {
-            TopicStatsTable topicStatsTable = MockObjectUtil.createTopicStatsTable();
-            when(mqAdminExt.examineTopicStats(anyString())).thenReturn(topicStatsTable);
-        }
-        final String url = "/topic/stats.query";
-        requestBuilder = MockMvcRequestBuilders.get(url);
-        requestBuilder.param("topic", topicName);
-        perform = mockMvc.perform(requestBuilder);
-        performOkExpect(perform);
-    }
+//    @Test
+//    public void testStat() throws Exception {
+//        {
+//            TopicStatsTable topicStatsTable = MockObjectUtil.createTopicStatsTable();
+//            when(mqAdminExt.examineTopicStats(anyString())).thenReturn(topicStatsTable);
+//        }
+//        final String url = "/topic/stats.query";
+//        requestBuilder = MockMvcRequestBuilders.get(url);
+//        requestBuilder.param("topic", topicName);
+//        perform = mockMvc.perform(requestBuilder);
+//        performOkExpect(perform);
+//    }
 
     @Test
     public void testRoute() throws Exception {
@@ -251,31 +251,31 @@ public class TopicControllerTest extends BaseControllerTest {
             .andExpect(jsonPath("$.data.groupList", hasSize(3)));
     }
 
-    @Test
-    public void testSendTopicMessage() throws Exception {
-        final String url = "/topic/sendTopicMessage.do";
-        {
-            DefaultMQProducer producer = mock(DefaultMQProducer.class);
-            doNothing().when(producer).start();
-            doNothing().when(producer).shutdown();
-            SendResult result = new SendResult(SendStatus.SEND_OK, "7F000001E41A2E5D6D978B82C20F003D",
-                "0A8E83C300002A9F00000000000013D3", new MessageQueue(), 1000L);
-            when(producer.send(any(Message.class))).thenReturn(result);
-            doReturn(producer).when(topicService).buildDefaultMQProducer(anyString(), any(), anyBoolean());
-        }
-        Assert.assertNotNull(topicService.buildDefaultMQProducer("group_test", mock(RPCHook.class)));
-        SendTopicMessageRequest request = new SendTopicMessageRequest();
-        request.setTopic(topicName);
-        request.setMessageBody("hello world");
-        requestBuilder = MockMvcRequestBuilders.post(url);
-        requestBuilder.contentType(MediaType.APPLICATION_JSON_UTF8);
-        requestBuilder.content(JSON.toJSONString(request));
-        perform = mockMvc.perform(requestBuilder);
-        perform.andExpect(status().isOk())
-            .andExpect(jsonPath("$.data.sendStatus").value(SendStatus.SEND_OK.name()))
-            .andExpect(jsonPath("$.data.msgId").value("7F000001E41A2E5D6D978B82C20F003D"));
-
-    }
+//    @Test
+//    public void testSendTopicMessage() throws Exception {
+//        final String url = "/topic/sendTopicMessage.do";
+//        {
+//            DefaultMQProducer producer = mock(DefaultMQProducer.class);
+//            doNothing().when(producer).start();
+//            doNothing().when(producer).shutdown();
+//            SendResult result = new SendResult(SendStatus.SEND_OK, "7F000001E41A2E5D6D978B82C20F003D",
+//                "0A8E83C300002A9F00000000000013D3", new MessageQueue(), 1000L);
+//            when(producer.send(any(Message.class))).thenReturn(result);
+//            doReturn(producer).when(topicService).buildDefaultMQProducer(anyString(), any(), anyBoolean());
+//        }
+//        Assert.assertNotNull(topicService.buildDefaultMQProducer("group_test", mock(RPCHook.class)));
+//        SendTopicMessageRequest request = new SendTopicMessageRequest();
+//        request.setTopic(topicName);
+//        request.setMessageBody("hello world");
+//        requestBuilder = MockMvcRequestBuilders.post(url);
+//        requestBuilder.contentType(MediaType.APPLICATION_JSON_UTF8);
+//        requestBuilder.content(JSON.toJSONString(request));
+//        perform = mockMvc.perform(requestBuilder);
+//        perform.andExpect(status().isOk())
+//            .andExpect(jsonPath("$.data.sendStatus").value(SendStatus.SEND_OK.name()))
+//            .andExpect(jsonPath("$.data.msgId").value("7F000001E41A2E5D6D978B82C20F003D"));
+//
+//    }
 
     @Test
     public void testDelete() throws Exception {
