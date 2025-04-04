@@ -16,6 +16,10 @@
  */
 package org.apache.rocketmq.dashboard;
 
+import org.apache.rocketmq.dashboard.service.ConsumerService;
+import org.apache.rocketmq.dashboard.service.TopicService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.servlet.ServletComponentScan;
@@ -27,10 +31,21 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @ServletComponentScan
 @EnableMBeanExport(registration = RegistrationPolicy.IGNORE_EXISTING)
-public class App {
+public class App implements CommandLineRunner {
+
+    @Autowired
+    private TopicService topicService;
+
+    @Autowired
+    private ConsumerService consumerService;
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
     }
 
+    @Override
+    public void run(String... args) throws Exception {
+        topicService.examineAllTopicType();
+        consumerService.queryGroupList(false,"");
+    }
 }
