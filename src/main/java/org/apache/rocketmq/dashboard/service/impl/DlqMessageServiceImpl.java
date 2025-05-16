@@ -21,7 +21,7 @@ import com.google.common.base.Throwables;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.MixAll;

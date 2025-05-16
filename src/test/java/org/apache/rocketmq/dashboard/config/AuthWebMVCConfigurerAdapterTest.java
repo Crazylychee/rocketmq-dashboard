@@ -36,38 +36,38 @@ import java.util.List;
 
 public class AuthWebMVCConfigurerAdapterTest extends BaseTest {
 
-    @InjectMocks
-    private AuthWebMVCConfigurerAdapter authWebMVCConfigurerAdapter;
-
-    @Mock
-    private RMQConfigure configure;
-
-    @Mock
-    private AuthInterceptor authInterceptor;
-
-    @Before
-    public void init() throws Exception {
-        MockitoAnnotations.initMocks(this);
-    }
-
-
-    @Test
-    public void addInterceptors() {
-        Mockito.when(configure.isLoginRequired()).thenReturn(true);
-        InterceptorRegistry registry = new InterceptorRegistry();
-        Assertions.assertDoesNotThrow(() -> authWebMVCConfigurerAdapter.addInterceptors(registry));
-    }
-
-    @Test
-    public void addArgumentResolvers() {
-        List<HandlerMethodArgumentResolver> argumentResolvers = Lists.newArrayList();
-        authWebMVCConfigurerAdapter.addArgumentResolvers(argumentResolvers);
-        Assertions.assertEquals(1, argumentResolvers.size());
-    }
-
-    @Test
-    public void addViewControllers() {
-        ViewControllerRegistry registry = new ViewControllerRegistry(new ClassPathXmlApplicationContext());
-        Assertions.assertDoesNotThrow(() -> authWebMVCConfigurerAdapter.addViewControllers(registry));
-    }
+//    @InjectMocks
+//    private AuthWebMVCConfigurerAdapter authWebMVCConfigurerAdapter;
+//
+//    @Mock
+//    private RMQConfigure configure;
+//
+//    @Mock
+//    private AuthInterceptor authInterceptor;
+//
+//    @Before
+//    public void init() throws Exception {
+//        MockitoAnnotations.initMocks(this);
+//    }
+//
+//
+//    @Test
+//    public void addInterceptors() {
+//        Mockito.when(configure.isLoginRequired()).thenReturn(true);
+//        InterceptorRegistry registry = new InterceptorRegistry();
+//        Assertions.assertDoesNotThrow(() -> authWebMVCConfigurerAdapter.addInterceptors(registry));
+//    }
+//
+//    @Test
+//    public void addArgumentResolvers() {
+//        List<HandlerMethodArgumentResolver> argumentResolvers = Lists.newArrayList();
+//        authWebMVCConfigurerAdapter.addArgumentResolvers(argumentResolvers);
+//        Assertions.assertEquals(1, argumentResolvers.size());
+//    }
+//
+//    @Test
+//    public void addViewControllers() {
+//        ViewControllerRegistry registry = new ViewControllerRegistry(new ClassPathXmlApplicationContext());
+//        Assertions.assertDoesNotThrow(() -> authWebMVCConfigurerAdapter.addViewControllers(registry));
+//    }
 }

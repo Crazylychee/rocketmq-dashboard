@@ -27,12 +27,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import org.apache.rocketmq.auth.migration.v1.PlainAccessConfig;
 import org.apache.rocketmq.client.QueryResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.impl.MQAdminImpl;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
-import org.apache.rocketmq.common.PlainAccessConfig;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.remoting.protocol.admin.ConsumeStats;
 import org.apache.rocketmq.remoting.protocol.admin.RollbackStats;
@@ -149,36 +150,6 @@ public class MQAdminExtImplTest {
     public void testCreateAndUpdateTopicConfig() throws Exception {
         assertNotNull(mqAdminExtImpl);
         mqAdminExtImpl.createAndUpdateTopicConfig(brokerAddr, new TopicConfig());
-    }
-
-    @Test
-    public void testDeletePlainAccessConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.deletePlainAccessConfig(brokerAddr, "rocketmq");
-    }
-
-    @Test
-    public void testUpdateGlobalWhiteAddrConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.updateGlobalWhiteAddrConfig(brokerAddr, "192.168.*.*");
-    }
-
-    @Test
-    public void testCreateAndUpdatePlainAccessConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.createAndUpdatePlainAccessConfig(brokerAddr, new PlainAccessConfig());
-    }
-
-    @Test
-    public void testExamineBrokerClusterAclVersionInfo() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        assertNull(mqAdminExtImpl.examineBrokerClusterAclVersionInfo(brokerAddr));
-    }
-
-    @Test
-    public void testExamineBrokerClusterAclConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        assertNull(mqAdminExtImpl.examineBrokerClusterAclConfig(brokerAddr));
     }
 
     @Test
@@ -539,7 +510,7 @@ public class MQAdminExtImplTest {
     public void testConsumeMessageDirectly() throws Exception {
         assertNotNull(mqAdminExtImpl);
         {
-            when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
+            when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(),anyString())).thenReturn(new ConsumeMessageDirectlyResult());
             when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
         }
         ConsumeMessageDirectlyResult result1 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "7F000001ACC018B4AAC2116AF6500000");
@@ -620,15 +591,6 @@ public class MQAdminExtImplTest {
         Assert.assertEquals(storeTime, 1628495765398L);
     }
 
-    @Test
-    public void testViewMessage() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        {
-            when(defaultMQAdminExt.viewMessage(anyString())).thenReturn(new MessageExt());
-        }
-        MessageExt messageExt = mqAdminExtImpl.viewMessage("7F000001ACC018B4AAC2116AF6500000");
-        Assert.assertNotNull(messageExt);
-    }
 
     @Test
     public void testQueryMessage() throws Exception {
@@ -675,7 +637,7 @@ public class MQAdminExtImplTest {
         assertNotNull(mqAdminExtImpl);
         {
             when(MQAdminInstance.threadLocalMqClientInstance().getMQAdminImpl()).thenReturn(mock(MQAdminImpl.class));
-            when(defaultMQAdminExt.viewMessage(anyString())).thenThrow(new RuntimeException("viewMessage exception"));
+            when(defaultMQAdminExt.viewMessage(anyString(),anyString())).thenThrow(new RuntimeException("viewMessage exception"));
         }
         mqAdminExtImpl.viewMessage("topic_test", "7F000001ACC018B4AAC2116AF6500000");
     }
@@ -792,7 +754,6 @@ public class MQAdminExtImplTest {
     @Test
     public void testResumeCheckHalfMessage() throws Exception {
         assertNotNull(mqAdminExtImpl);
-        Assert.assertFalse(mqAdminExtImpl.resumeCheckHalfMessage("7F000001ACC018B4AAC2116AF6500000"));
         Assert.assertFalse(mqAdminExtImpl.resumeCheckHalfMessage("topic_test", "7F000001ACC018B4AAC2116AF6500000"));
     }
 

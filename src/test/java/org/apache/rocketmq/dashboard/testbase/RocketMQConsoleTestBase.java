@@ -19,7 +19,7 @@ package org.apache.rocketmq.dashboard.testbase;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import java.util.List;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;

@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.service.DashboardCollectService;
 import org.slf4j.Logger;

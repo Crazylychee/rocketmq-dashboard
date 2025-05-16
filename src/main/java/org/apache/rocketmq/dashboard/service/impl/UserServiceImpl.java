@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.dashboard.service.impl;
 
+import jakarta.validation.constraints.NotNull;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.exception.ServiceException;
 import org.apache.rocketmq.dashboard.model.User;
@@ -24,8 +25,8 @@ import org.apache.rocketmq.dashboard.service.UserService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import javax.validation.constraints.NotNull;
+import jakarta.annotation.Resource;
+
 import java.io.FileReader;
 import java.io.InputStream;
 import java.util.HashMap;

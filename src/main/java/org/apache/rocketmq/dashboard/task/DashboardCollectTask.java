@@ -32,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.dashboard.service.ConsumerService;
 import org.apache.rocketmq.remoting.protocol.body.ClusterInfo;

@@ -24,7 +24,7 @@ import com.alibaba.excel.write.style.HorizontalCellStyleStrategy;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.util.List;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.HorizontalAlignment;
 
 public class ExcelUtil {

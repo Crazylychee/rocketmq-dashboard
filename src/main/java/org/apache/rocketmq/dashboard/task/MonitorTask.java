@@ -17,7 +17,7 @@
 package org.apache.rocketmq.dashboard.task;
 
 import java.util.Map;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.dashboard.model.ConsumerMonitorConfig;
 import org.apache.rocketmq.dashboard.model.GroupConsumeInfo;
 import org.apache.rocketmq.dashboard.service.ConsumerService;

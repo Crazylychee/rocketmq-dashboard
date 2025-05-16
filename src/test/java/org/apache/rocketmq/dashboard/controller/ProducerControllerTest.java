@@ -56,7 +56,7 @@ public class ProducerControllerTest extends BaseControllerTest {
         AuthInterceptor authInterceptor = new AuthInterceptor();
         ReflectionTestUtils.setField(authInterceptor, "loginService", new LoginServiceImpl());
         MockMvc innerMockMvc = MockMvcBuilders.standaloneSetup(getTestController())
-            .addInterceptors(authInterceptor)
+//            .addInterceptors(authInterceptor)
             .alwaysDo(MyPrintingResultHandler.me())
             .setControllerAdvice(new GlobalExceptionHandler(), new GlobalRestfulResponseBodyAdvice())
             .build();

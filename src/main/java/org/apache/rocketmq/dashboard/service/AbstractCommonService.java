@@ -22,7 +22,7 @@ import com.google.common.collect.Sets;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.commons.collections.CollectionUtils;
 
 public abstract class AbstractCommonService {

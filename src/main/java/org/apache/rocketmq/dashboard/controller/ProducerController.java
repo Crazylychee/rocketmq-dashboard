@@ -16,7 +16,8 @@
  */
 package org.apache.rocketmq.dashboard.controller;
 
-import javax.annotation.Resource;
+
+import jakarta.annotation.Resource;
 import org.apache.rocketmq.remoting.protocol.body.ProducerConnection;
 import org.apache.rocketmq.dashboard.model.ConnectionInfo;
 import org.apache.rocketmq.dashboard.permisssion.Permission;

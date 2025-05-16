@@ -17,7 +17,7 @@
 
 package org.apache.rocketmq.dashboard.controller;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 import com.google.common.base.Strings;
 import org.apache.rocketmq.dashboard.permisssion.Permission;

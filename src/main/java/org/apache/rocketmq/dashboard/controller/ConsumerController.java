@@ -17,7 +17,7 @@
 package org.apache.rocketmq.dashboard.controller;
 
 import com.google.common.base.Preconditions;
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.rocketmq.remoting.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.dashboard.model.ConnectionInfo;
