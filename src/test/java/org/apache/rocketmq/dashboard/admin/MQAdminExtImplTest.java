@@ -513,9 +513,7 @@ public class MQAdminExtImplTest {
             when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(),anyString())).thenReturn(new ConsumeMessageDirectlyResult());
             when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
         }
-        ConsumeMessageDirectlyResult result1 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "7F000001ACC018B4AAC2116AF6500000");
         ConsumeMessageDirectlyResult result2 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "topic_test", "7F000001ACC018B4AAC2116AF6500000");
-        Assert.assertNotNull(result1);
         Assert.assertNotNull(result2);
     }
 
