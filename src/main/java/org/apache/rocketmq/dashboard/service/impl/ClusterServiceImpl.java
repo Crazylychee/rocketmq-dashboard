@@ -73,12 +73,17 @@ public class ClusterServiceImpl implements ClusterService {
 
     @Override
     public Properties getBrokerConfig(String brokerAddr) {
+        Properties properties = null;
         try {
-            return mqAdminExt.getBrokerConfig(brokerAddr);
+            properties = mqAdminExt.getBrokerConfig(brokerAddr);
+            if(properties == null) {
+                throw new RuntimeException("get broker config failed, brokerAddr:" + brokerAddr);
+            }
         }
         catch (Exception e) {
             Throwables.throwIfUnchecked(e);
             throw new RuntimeException(e);
         }
+        return properties;
     }
 }
