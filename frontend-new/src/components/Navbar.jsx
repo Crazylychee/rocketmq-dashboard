@@ -1,19 +1,27 @@
-import React from 'react';
-import { Layout, Menu, Dropdown, Button } from 'antd';
-import { GlobalOutlined, DownOutlined, UserOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
+import { Layout, Menu, Dropdown, Button, Drawer, Grid, Space } from 'antd';
+import { GlobalOutlined, DownOutlined, UserOutlined, MenuOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useLanguage } from '../i18n/LanguageContext';
-import {translations} from "../i18n";
+import { useLanguage } from '../i18n/LanguageContext'; // Internationalization Context
 
 const { Header } = Layout;
+const { useBreakpoint } = Grid; // Used to determine screen breakpoints
 
 const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) => {
     const location = useLocation();
     const navigate = useNavigate();
-    const { lang, setLang ,t} = useLanguage();  // 从 useLanguage 拿到翻译资源 t
+    const { lang, setLang, t } = useLanguage();
+    const screens = useBreakpoint(); // Get current screen size breakpoints
+
+    const [drawerVisible, setDrawerVisible] = useState(false); // Controls drawer visibility
+
+    // Get selected menu item key based on current route path
     const getPath = () => location.pathname.replace('/', '');
 
-    const handleMenuClick = ({ key }) => navigate(`/${key}`);
+    const handleMenuClick = ({ key }) => {
+        navigate(`/${key}`);
+        setDrawerVisible(false); // Close drawer after clicking a menu item
+    };
 
     const langMenu = (
         <Menu onClick={({ key }) => setLang(key)}>
@@ -35,10 +43,11 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
         </Menu>
     );
 
-    const items = [
+    // Menu item configuration
+    const menuItems = [
         { key: 'ops', label: t.OPS },
         ...(rmqVersion ? [{ key: 'proxy', label: t.PROXY }] : []),
-        { key: '', label: t.DASHBOARD },
+        { key: '', label: t.DASHBOARD }, // Dashboard corresponds to root path
         { key: 'cluster', label: t.CLUSTER },
         { key: 'topic', label: t.TOPIC },
         { key: 'consumer', label: t.CONSUMER },
@@ -46,44 +55,105 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
         { key: 'message', label: t.MESSAGE },
         { key: 'dlqMessage', label: t.DLQ_MESSAGE },
         { key: 'messageTrace', label: t.MESSAGETRACE },
-        ...(showAcl ? [{ key: 'acl', label: t.WHITE_LIST }] : []), // 假设你用的是“白名单”对应 ACL
+        ...(showAcl ? [{ key: 'acl', label: t.WHITE_LIST }] : []),
     ];
+
+    // Determine if it's a small screen (e.g., less than md)
+    const isSmallScreen = !screens.md;
+    // Determine if it's an extra small screen (e.g., less than sm)
+    const isExtraSmallScreen = !screens.sm;
 
     return (
         <Header
             className="navbar"
             style={{
-                backgroundColor: '#fff',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '0 24px',
+                padding: isExtraSmallScreen ? '0 16px' : '0 24px', // Smaller padding on extra small screens
             }}
         >
             <div className="navbar-left" style={{ display: 'flex', alignItems: 'center' }}>
-                <div style={{ fontWeight: 'bold', marginRight: '24px' }}>🚀 RocketMQ</div>
-                <Menu onClick={handleMenuClick} selectedKeys={[getPath()]} mode="horizontal" items={items} />
+                <div
+                    style={{
+                        fontWeight: 'bold',
+                        marginRight: isSmallScreen ? '16px' : '24px', // Adjust margin on small screens
+                        whiteSpace: 'nowrap', // Prevent text wrapping
+                        flexShrink: 0, // Prevent shrinking in flex container
+                        color: 'white', // Title text color also set to white
+                        fontSize: isSmallScreen ? '14px' : '18px',
+                    }}
+                >
+                    {t.TITLE}
+                </div>
+
+                {!isSmallScreen && ( // Display full menu on large screens
+                    <Menu
+                        onClick={handleMenuClick}
+                        selectedKeys={[getPath()]}
+                        mode="horizontal"
+                        items={menuItems}
+                        theme="dark" // Use dark theme to match Header background
+                        style={{ flex: 1, minWidth: 0 }} // Allow menu items to adapt width
+                    />
+                )}
             </div>
-            <div className="navbar-right" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+
+            <Space size={isExtraSmallScreen ? 8 : 16} > {/* Adjust spacing for buttons */}
                 <Dropdown overlay={langMenu}>
                     <Button icon={<GlobalOutlined />} size="small">
-                        {t.CHANGE_LANG} <DownOutlined />
+                        {!isExtraSmallScreen && t.CHANGE_LANG} {/* Hide text on extra small screens */}
+                        <DownOutlined />
                     </Button>
                 </Dropdown>
 
                 <Dropdown overlay={versionMenu}>
                     <Button size="small">
-                        {t.CHANGE_VERSION} <DownOutlined />
+                        {!isExtraSmallScreen && t.CHANGE_VERSION}
+                        <DownOutlined />
                     </Button>
                 </Dropdown>
                 {username && (
                     <Dropdown overlay={userMenu}>
                         <Button icon={<UserOutlined />} size="small">
-                            {username} <DownOutlined />
+                            {!isExtraSmallScreen && username}
+                            <DownOutlined />
                         </Button>
                     </Dropdown>
                 )}
-            </div>
+
+                {isSmallScreen && ( // Display hamburger icon on small screens
+                    <Button
+                        type="primary"
+                        icon={<MenuOutlined />}
+                        onClick={() => setDrawerVisible(true)}
+                        style={{ marginLeft: isExtraSmallScreen ? 8 : 16 }} // Adjust margin for hamburger icon
+                    />
+                )}
+            </Space>
+
+            {/* 修改这里的 Drawer 和 Menu 组件 */}
+            <Drawer
+                // 默认的 Drawer 背景色是白色，如果需要修改 Drawer 自身的背景色，则需要额外设置
+                // 或者在 bodyStyle 中设置深色背景，然后让 Menu 覆盖
+                title={t.MENU} // Drawer title
+                placement="left" // Drawer pops out from the left
+                onClose={() => setDrawerVisible(false)}
+                open={drawerVisible}
+                // 如果你想让 Drawer 的背景和 Menu 背景色一致，可以这样设置 bodyStyle
+                // 或者在 theme.js 中设置 components.Drawer.colorBgElevated 等
+                bodyStyle={{ padding: 0, backgroundColor: '#1c324a' }} // 将 Drawer 的 body 背景也设置为深色
+                width={200} // Set drawer width
+            >
+                <Menu
+                    onClick={handleMenuClick}
+                    selectedKeys={[getPath()]}
+                    mode="inline" // Use vertical menu in drawer
+                    items={menuItems}
+                    theme="dark"
+                    style={{ height: '100%', borderRight: 0 }} // Ensure menu fills the drawer
+                />
+            </Drawer>
         </Header>
     );
 };
