@@ -18,9 +18,11 @@ package org.apache.rocketmq.dashboard.service.impl;
 
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.service.ProxyService;
 import org.apache.rocketmq.dashboard.service.client.ProxyAdmin;
+import org.springframework.aop.framework.ProxyConfig;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;

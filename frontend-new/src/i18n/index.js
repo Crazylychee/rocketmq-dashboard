@@ -122,6 +122,9 @@ export const translations = {
         "MESSAGE_TYPE_DELAY": "定时/延时消息",
         "MESSAGE_TYPE_TRANSACTION": "事务消息",
         "UPDATE_TIME": "更新时间",
+        "TREND": "趋势",
+        "PROXY_CONFIG": "代理配置",
+
     },
     en: {
         "ENGLISH": "English",
@@ -245,6 +248,7 @@ export const translations = {
         "MESSAGE_TYPE_DELAY": "DELAY",
         "MESSAGE_TYPE_TRANSACTION": "TRANSACTION",
         "UPDATE_TIME": "Update Time",
+        "TREND": "trend",
     }
 
 };

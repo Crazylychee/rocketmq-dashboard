@@ -98,10 +98,9 @@ const Cluster = () => {
     const columns = [
         {
             title: t.SPLIT,
-            dataIndex: 'brokerId', // 直接使用 brokerId
+            dataIndex: 'brokerName', // 直接使用 brokerId
             key: 'split',
-            align: 'center',
-            render: (brokerId) => brokerId === 0 ? t.MASTER : t.SLAVE,
+            align: 'center'
         },
         {
             title: t.NO,

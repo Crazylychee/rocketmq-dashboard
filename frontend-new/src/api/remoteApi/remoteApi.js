@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// 可以是单独的 api.js 或 utils/api.js 文件
+// 可以是单独的 api.js 或 utils.js 文件
 // appConfig 应该根据你的项目实际情况定义，例如在 src/config.js
-// src/api/remoteApi/remoteApi.js (或你存放 remoteApi 和 tools 的文件)
+// src/remoteApi/remoteApi.js (或你存放 remoteApi 和 tools 的文件)
 
 // appConfig 应该根据你的项目实际情况定义，例如在 src/config.js
 const appConfig = {
-    apiBaseUrl: 'http://localhost:8080' // 请替换为你的实际 API Base URL
+    apiBaseUrl: 'http://localhost:8082' // 请替换为你的实际 API Base URL
 };
 
 const remoteApi = {
@@ -31,6 +31,259 @@ const remoteApi = {
         return `${appConfig.apiBaseUrl}/${endpoint}`;
     },
 
+    queryTopic: async (callback) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/list.query"));
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            console.error("Error fetching topic list:", error);
+            callback({ status: 1, errMsg: "Failed to fetch topic list" }); // Simulate error response
+        }
+    },
+    queryTopicList: async () => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/list.queryTopicType"));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching topic list:", error);
+            return { status: 1, errMsg: "Failed to fetch topic list" };
+        }
+    },
+
+    refreshTopicList: async () => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/refresh"), {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.status === 0 && result.data === true) {
+                return remoteApi.queryTopicList();
+            }
+            return result;
+        } catch (error) {
+            console.error("Error refreshing topic list:", error);
+            return { status: 1, errMsg: "Failed to refresh topic list" };
+        }
+    },
+
+    deleteTopic: async (topic) => {
+        try {
+            const url = remoteApi.buildUrl(`/topic/deleteTopic.do?topic=${encodeURIComponent(topic)}`);
+            const response = await fetch(url, {
+                method: 'POST', // 仍然使用 POST 方法，但参数在 URL 中
+                headers: {
+                    'Content-Type': 'application/json', // 可以根据你的后端需求决定是否需要这个 header
+                },
+                // body: JSON.stringify({ topic }) // 移除 body
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error deleting topic:", error);
+            return { status: 1, errMsg: "Failed to delete topic" };
+        }
+    },
+
+    getTopicStats: async (topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/topic/stats.query?topic=${topic}`));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching topic stats:", error);
+            return { status: 1, errMsg: "Failed to fetch topic stats" };
+        }
+    },
+
+    getTopicRoute: async (topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/topic/route.query?topic=${topic}`));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching topic route:", error);
+            return { status: 1, errMsg: "Failed to fetch topic route" };
+        }
+    },
+
+    getTopicConsumers: async (topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/topic/queryConsumerByTopic.query?topic=${topic}`));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching topic consumers:", error);
+            return { status: 1, errMsg: "Failed to fetch topic consumers" };
+        }
+    },
+
+    getTopicConsumerGroups: async (topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/topic/queryTopicConsumerInfo.query?topic=${topic}`));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching consumer groups:", error);
+            return { status: 1, errMsg: "Failed to fetch consumer groups" };
+        }
+    },
+
+    getTopicConfig: async (topic) => {
+        try {
+            console.log(topic)
+            const response = await fetch(remoteApi.buildUrl(`/topic/examineTopicConfig.query?topic=${topic}`));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching topic config:", error);
+            return { status: 1, errMsg: "Failed to fetch topic config" };
+        }
+    },
+
+    getClusterList: async () => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/cluster/list.query"));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching cluster list:", error);
+            return { status: 1, errMsg: "Failed to fetch cluster list" };
+        }
+    },
+
+    createOrUpdateTopic: async (topicData) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/createOrUpdate.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(topicData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error creating/updating topic:", error);
+            return { status: 1, errMsg: "Failed to create/update topic" };
+        }
+    },
+
+    resetConsumerOffset: async (data) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/consumer/resetOffset.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error resetting consumer offset:", error);
+            return { status: 1, errMsg: "Failed to reset consumer offset" };
+        }
+    },
+
+    skipMessageAccumulate: async (data) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/consumer/skipAccumulate.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error skipping message accumulate:", error);
+            return { status: 1, errMsg: "Failed to skip message accumulate" };
+        }
+    },
+
+    sendTopicMessage: async (messageData) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/sendTopicMessage.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(messageData)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error sending topic message:", error);
+            return { status: 1, errMsg: "Failed to send topic message" };
+        }
+    },
+
+    deleteTopicByBroker: async (brokerName, topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/topic/deleteTopicByBroker.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ brokerName, topic })
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error deleting topic by broker:", error);
+            return { status: 1, errMsg: "Failed to delete topic by broker" };
+        }
+    },
+
+    // New API methods for Ops page
+    queryOpsHomePage: async () => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/ops/homePage.query"));
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching ops home page data:", error);
+            return { status: 1, errMsg: "Failed to fetch ops home page data" };
+        }
+    },
+
+    updateNameSvrAddr: async (nameSvrAddr) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/ops/updateNameSvrAddr.do?nameSvrAddrList=${encodeURIComponent(nameSvrAddr)}`), {
+                method: 'POST',
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error updating NameServer address:", error);
+            return { status: 1, errMsg: "Failed to update NameServer address" };
+        }
+    },
+
+    addNameSvrAddr: async (newNamesrvAddr) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/ops/addNameSvrAddr.do?newNamesrvAddr=${encodeURIComponent(newNamesrvAddr)}`), {
+                method: 'POST',
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error adding NameServer address:", error);
+            return { status: 1, errMsg: "Failed to add NameServer address" };
+        }
+    },
+
+    updateIsVIPChannel: async (useVIPChannel) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/ops/updateIsVIPChannel.do?useVIPChannel=${useVIPChannel}`), {
+                method: 'POST',
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error updating VIP Channel status:", error);
+            return { status: 1, errMsg: "Failed to update VIP Channel status" };
+        }
+    },
+
+    updateUseTLS: async (useTLS) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/ops/updateUseTLS.do?useTLS=${useTLS}`), {
+                method: 'POST',
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("Error updating TLS status:", error);
+            return { status: 1, errMsg: "Failed to update TLS status" };
+        }
+    },
+
     queryClusterList: async (callback) => {
         try {
             const response = await fetch(remoteApi.buildUrl("/cluster/list.query"));
@@ -39,6 +292,59 @@ const remoteApi = {
         } catch (error) {
             console.error("Error fetching cluster list:", error);
             callback({ status: 1, errMsg: "Failed to fetch cluster list" });
+        }
+    },
+
+    queryBrokerHisData: async (date, callback) => {
+        try {
+            const url = new URL(remoteApi.buildUrl('/dashboard/broker.query'));
+            url.searchParams.append('date', date);
+            const response = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                console.error("Broker history data request timed out:", error);
+                callback({ status: 1, errMsg: "Request timed out for broker history data" });
+            } else {
+                console.error("Error fetching broker history data:", error);
+                callback({ status: 1, errMsg: "Failed to fetch broker history data" });
+            }
+        }
+    },
+
+    queryTopicHisData: async (date, topicName, callback) => {
+        try {
+            const url = new URL(remoteApi.buildUrl('/dashboard/topic.query'));
+            url.searchParams.append('date', date);
+            url.searchParams.append('topicName', topicName);
+            const response = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                console.error("Topic history data request timed out:", error);
+                callback({ status: 1, errMsg: "Request timed out for topic history data" });
+            } else {
+                console.error("Error fetching topic history data:", error);
+                callback({ status: 1, errMsg: "Failed to fetch topic history data" });
+            }
+        }
+    },
+
+    queryTopicCurrentData: async (callback) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl('/dashboard/topicCurrent.query'), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            if (error.name === 'TimeoutError') {
+                console.error("Topic current data request timed out:", error);
+                callback({ status: 1, errMsg: "Request timed out for topic current data" });
+            } else {
+                console.error("Error fetching topic current data:", error);
+                callback({ status: 1, errMsg: "Failed to fetch topic current data" });
+            }
         }
     },
 
@@ -54,10 +360,43 @@ const remoteApi = {
             callback({ status: 1, errMsg: "Failed to fetch broker config" });
         }
     },
+
+    /**
+     * 查询 Proxy 首页信息，包括地址列表和当前 Proxy 地址
+     */
+    queryProxyHomePage: async (callback) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/proxy/homePage.query"));
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            console.error("Error fetching proxy home page:", error);
+            callback({ status: 1, errMsg: "Failed to fetch proxy home page" });
+        }
+    },
+
+    /**
+     * 添加新的 Proxy 地址
+     */
+    addProxyAddr: async (newProxyAddr, callback) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/proxy/addProxyAddr.do"), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ newProxyAddr }).toString()
+            });
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            console.error("Error adding proxy address:", error);
+            callback({ status: 1, errMsg: "Failed to add proxy address" });
+        }
+    }
 };
 
 const tools = {
     // 适配新的数据结构
+    dashboardRefreshTime: 5000,
     generateBrokerMap: (brokerServer, clusterAddrTable, brokerAddrTable) => {
         const clusterMap = {}; // 最终存储 { clusterName: [brokerInstance1, brokerInstance2, ...] }
 
@@ -68,27 +407,23 @@ const tools = {
             brokerNamesInCluster.forEach(brokerName => {
                 // 从 brokerAddrTable 获取当前 brokerName 下的所有 brokerId 及其地址
                 const brokerAddrs = brokerAddrTable[brokerName]?.brokerAddrs; // 确保 brokerAddrs 存在
-
+                console.log(brokerAddrs)
                 if (brokerAddrs) {
                     Object.entries(brokerAddrs).forEach(([brokerIdStr, address]) => {
                         const brokerId = parseInt(brokerIdStr); // brokerId 是字符串，转为数字
-
+                        console.log(brokerId)
+                        console.log(brokerName)
                         // 从 brokerServer 获取当前 brokerName 和 brokerId 对应的详细信息
                         const detail = brokerServer[brokerName]?.[brokerIdStr];
 
                         if (detail) {
                             clusterMap[clusterName].push({
-                                // 基础信息
                                 brokerName: brokerName,
                                 brokerId: brokerId,
-                                address: address, // 从 brokerAddrTable 获取的地址
-
-                                // 从 brokerServer 复制所有详细数据
+                                address: address,
                                 ...detail,
-
-                                // 额外添加，方便 showDetail 直接使用 record
                                 detail: detail,
-                                brokerConfig: {}, // 占位符，配置是点击时动态加载的
+                                brokerConfig: {},
                             });
                         } else {
                             console.warn(`No detail found for broker: ${brokerName} with ID: ${brokerIdStr}`);

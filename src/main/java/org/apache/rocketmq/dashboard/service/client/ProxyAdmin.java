@@ -21,6 +21,7 @@ import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
 import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 import org.apache.rocketmq.remoting.protocol.body.ConsumerConnection;
+import org.springframework.aop.framework.ProxyConfig;
 
 public interface ProxyAdmin {
 

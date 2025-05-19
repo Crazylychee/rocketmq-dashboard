@@ -16,6 +16,7 @@
  */
 package org.apache.rocketmq.dashboard.controller;
 
+import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.dashboard.permisssion.Permission;
 import org.apache.rocketmq.dashboard.service.ProxyService;
 import org.springframework.stereotype.Controller;
@@ -37,6 +38,7 @@ public class ProxyController {
     public Object homePage() {
         return proxyService.getProxyHomePage();
     }
+
 
     @RequestMapping(value = "/addProxyAddr.do", method = RequestMethod.POST)
     @ResponseBody

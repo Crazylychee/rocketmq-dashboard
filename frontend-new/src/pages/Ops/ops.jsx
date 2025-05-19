@@ -1,84 +1,85 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Button, Switch, Input, Typography, Space, message } from 'antd';
+import {tools,remoteApi} from '../../api/remoteApi/remoteApi';
 
 const { Title } = Typography;
 const { Option } = Select;
 
-const Ops = ({
-                            initialNamesrvAddrList = [],
-                            initialSelectedNamesrv = '',
-                            initialUseVIPChannel = false,
-                            initialUseTLS = false,
-                            writeOperationEnabled = true,
-                            onUpdateNameSvrAddr,
-                            onAddNameSvrAddr,
-                            onUpdateIsVIPChannel,
-                            onUpdateUseTLS,
-                        }) => {
-    const [namesrvAddrList, setNamesrvAddrList] = useState(initialNamesrvAddrList);
-    const [selectedNamesrv, setSelectedNamesrv] = useState(initialSelectedNamesrv);
+const Ops = () => {
+    const [namesrvAddrList, setNamesrvAddrList] = useState([]);
+    const [selectedNamesrv, setSelectedNamesrv] = useState('');
     const [newNamesrvAddr, setNewNamesrvAddr] = useState('');
-    const [useVIPChannel, setUseVIPChannel] = useState(initialUseVIPChannel);
-    const [useTLS, setUseTLS] = useState(initialUseTLS);
+    const [useVIPChannel, setUseVIPChannel] = useState(false);
+    const [useTLS, setUseTLS] = useState(false);
+    const [writeOperationEnabled, setWriteOperationEnabled] = useState(true); // Default to true
 
     useEffect(() => {
-        if (JSON.stringify(namesrvAddrList) !== JSON.stringify(initialNamesrvAddrList)) {
-            setNamesrvAddrList(initialNamesrvAddrList);
-        }
-    }, [initialNamesrvAddrList]);
+        const fetchOpsData = async () => {
+            const userRole = sessionStorage.getItem("userrole");
+            setWriteOperationEnabled(userRole === null || userRole === "1"); // Assuming "1" means write access
 
-    useEffect(() => {
-        if (selectedNamesrv !== initialSelectedNamesrv) {
-            setSelectedNamesrv(initialSelectedNamesrv);
-        }
-    }, [initialSelectedNamesrv]);
+            const resp = await remoteApi.queryOpsHomePage();
+            if (resp.status === 0) {
+                setNamesrvAddrList(resp.data.namesvrAddrList);
+                setUseVIPChannel(resp.data.useVIPChannel);
+                setUseTLS(resp.data.useTLS);
+                setSelectedNamesrv(resp.data.currentNamesrv);
+            } else {
+                message.error(resp.errMsg);
+            }
+        };
+        fetchOpsData();
+    }, []);
 
-    useEffect(() => {
-        if (useVIPChannel !== initialUseVIPChannel) {
-            setUseVIPChannel(initialUseVIPChannel);
-        }
-    }, [initialUseVIPChannel]);
-
-    useEffect(() => {
-        if (useTLS !== initialUseTLS) {
-            setUseTLS(initialUseTLS);
-        }
-    }, [initialUseTLS]);
-
-    // 处理更新选中地址
-    const handleUpdateNameSvrAddr = () => {
+    const handleUpdateNameSvrAddr = async () => {
         if (!selectedNamesrv) {
             message.warning('请选择一个 NameServer 地址');
             return;
         }
-        if (onUpdateNameSvrAddr) {
-            onUpdateNameSvrAddr(selectedNamesrv);
+        const resp = await remoteApi.updateNameSvrAddr(selectedNamesrv);
+        if (resp.status === 0) {
+            message.info('UPDATE SUCCESS');
+        } else {
+            message.error(resp.errMsg);
         }
     };
 
-    // 处理新增地址
-    const handleAddNameSvrAddr = () => {
+    const handleAddNameSvrAddr = async () => {
         if (!newNamesrvAddr.trim()) {
             message.warning('请输入新的 NameServer 地址');
             return;
         }
-        if (onAddNameSvrAddr) {
-            onAddNameSvrAddr(newNamesrvAddr.trim());
+        const resp = await remoteApi.addNameSvrAddr(newNamesrvAddr.trim());
+        if (resp.status === 0) {
+            if (!namesrvAddrList.includes(newNamesrvAddr.trim())) {
+                setNamesrvAddrList([...namesrvAddrList, newNamesrvAddr.trim()]);
+            }
             setNewNamesrvAddr('');
+            message.info('ADD SUCCESS');
+        } else {
+            message.error(resp.errMsg);
         }
     };
 
-    // 更新 VIP Channel 状态
-    const handleUpdateIsVIPChannel = () => {
-        if (onUpdateIsVIPChannel) {
-            onUpdateIsVIPChannel(useVIPChannel);
+    const handleUpdateIsVIPChannel = async (checked) => {
+        setUseVIPChannel(checked); // Optimistic update
+        const resp = await remoteApi.updateIsVIPChannel(checked);
+        if (resp.status === 0) {
+            message.info('UPDATE SUCCESS');
+        } else {
+            message.error(resp.errMsg);
+            setUseVIPChannel(!checked); // Revert on error
         }
     };
 
-    // 更新 TLS 状态
-    const handleUpdateUseTLS = () => {
-        if (onUpdateUseTLS) {
-            onUpdateUseTLS(useTLS);
+    const handleUpdateUseTLS = async (checked) => {
+        setUseTLS(checked); // Optimistic update
+        const resp = await remoteApi.updateUseTLS(checked);
+        if (resp.status === 0) {
+            message.info('UPDATE SUCCESS');
+        } else {
+            message.error(resp.errMsg);
+            setUseTLS(!checked); // Revert on error
         }
     };
 
@@ -128,11 +129,11 @@ const Ops = ({
                 <Space align="center">
                     <Switch
                         checked={useVIPChannel}
-                        onChange={setUseVIPChannel}
+                        onChange={handleUpdateIsVIPChannel}
                         disabled={!writeOperationEnabled}
                     />
                     {writeOperationEnabled && (
-                        <Button type="primary" onClick={handleUpdateIsVIPChannel}>
+                        <Button type="primary" onClick={() => handleUpdateIsVIPChannel(useVIPChannel)}>
                             UPDATE
                         </Button>
                     )}
@@ -144,11 +145,11 @@ const Ops = ({
                 <Space align="center">
                     <Switch
                         checked={useTLS}
-                        onChange={setUseTLS}
+                        onChange={handleUpdateUseTLS}
                         disabled={!writeOperationEnabled}
                     />
                     {writeOperationEnabled && (
-                        <Button type="primary" onClick={handleUpdateUseTLS}>
+                        <Button type="primary" onClick={() => handleUpdateUseTLS(useTLS)}>
                             UPDATE
                         </Button>
                     )}
