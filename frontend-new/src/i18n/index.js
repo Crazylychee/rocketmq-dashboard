@@ -1,5 +1,6 @@
 export const translations = {
     zh: {
+        "READ_MORE": "阅读更多",
         "CONFIRM_DELETE": "确认删除",
         "CANCEL": "取消",
         "SELECT_DELETE_BROKERS":"请选择在哪个Broker删除消费者组",

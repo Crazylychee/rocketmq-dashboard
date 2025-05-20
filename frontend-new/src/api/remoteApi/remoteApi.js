@@ -31,14 +31,186 @@ const remoteApi = {
         return `${appConfig.apiBaseUrl}/${endpoint}`;
     },
 
-    queryTopic: async (callback) => {
+    queryTopic: async () => {
         try {
             const response = await fetch(remoteApi.buildUrl("/topic/list.query"));
             const data = await response.json();
-            callback(data);
+            return data
         } catch (error) {
             console.error("Error fetching topic list:", error);
-            callback({ status: 1, errMsg: "Failed to fetch topic list" }); // Simulate error response
+            throw new Error("Failed to fetch topic list");
+        }
+    },
+    queryDlqMessageByConsumerGroup: async (consumerGroup, beginTime, endTime, pageNum, pageSize, taskId) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/dlqMessage/queryDlqMessageByConsumerGroup.query"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: `%DLQ%${consumerGroup}`,
+                    begin: beginTime,
+                    end: endTime,
+                    pageNum: pageNum,
+                    pageSize: pageSize,
+                    taskId: taskId,
+                }),
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error querying DLQ messages by consumer group:", error);
+            return { status: 1, errMsg: "Failed to query DLQ messages by consumer group" };
+        }
+    },
+    resendDlqMessage: async (msgId, consumerGroup, topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/message/consumeMessageDirectly.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                params: {
+                    msgId: msgId,
+                    consumerGroup: consumerGroup,
+                    topic: topic
+                },
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error resending DLQ message:", error);
+            return { status: 1, errMsg: "Failed to resend DLQ message" };
+        }
+    },
+    exportDlqMessage: async (msgId, consumerGroup) => {
+        try {
+            // Note: For actual file download, the response should be handled differently (e.g., creating a Blob and a download link)
+            const response = await fetch(remoteApi.buildUrl(`/dlqMessage/exportDlqMessage.do?msgId=${msgId}&consumerGroup=${consumerGroup}`));
+            // Assuming the server returns a success status for the API call itself, not the file content
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return { status: 0, msg: "Export request sent successfully" }; // Simulate success
+        } catch (error) {
+            console.error("Error exporting DLQ message:", error);
+            return { status: 1, errMsg: "Failed to export DLQ message" };
+        }
+    },
+    batchResendDlqMessage: async (messages) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/dlqMessage/batchResendDlqMessage.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(messages),
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error batch resending DLQ messages:", error);
+            return { status: 1, errMsg: "Failed to batch resend DLQ messages" };
+        }
+    },
+
+    /**
+     * Queries messages by topic with pagination.
+     * @param {string} topic The topic to query.
+     * @param {number} begin Timestamp in milliseconds for the start time.
+     * @param {number} end Timestamp in milliseconds for the end time.
+     * @param {number} pageNum The current page number (1-based).
+     * @param {number} pageSize The number of items per page.
+     * @param {string} taskId Optional task ID for continuous queries.
+     * @returns {Promise<Object>} The API response.
+     */
+    queryMessagePageByTopic: async (topic, begin, end, pageNum, pageSize, taskId) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/message/queryMessagePageByTopic.query"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    topic: topic,
+                    begin: begin,
+                    end: end,
+                    pageNum: pageNum,
+                    pageSize: pageSize,
+                    taskId: taskId
+                })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching message page by topic:", error);
+            throw new Error("Failed to fetch message page by topic");
+        }
+    },
+
+    /**
+     * Queries messages by topic and key.
+     * @param {string} topic The topic to query.
+     * @param {string} key The message key to query.
+     * @returns {Promise<Object>} The API response.
+     */
+    queryMessageByTopicAndKey: async (topic, key) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/message/queryMessageByTopicAndKey.query?topic=${topic}&key=${key}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching message by topic and key:", error);
+            throw new Error("Failed to fetch message by topic and key");
+        }
+    },
+
+    /**
+     * Views a message by its message ID and topic.
+     * @param {string} msgId The message ID.
+     * @param {string} topic The topic of the message.
+     * @returns {Promise<Object>} The API response.
+     */
+    viewMessage: async (msgId, topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/message/viewMessage.query?msgId=${msgId}&topic=${topic}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching message by message ID:", error);
+            throw new Error("Failed to fetch message by message ID");
+        }
+    },
+
+    /**
+     * Resends a message directly to a consumer group.
+     * @param {string} msgId The message ID.
+     * @param {string} consumerGroup The consumer group to resend to.
+     * @param {string} topic The topic of the message.
+     * @returns {Promise<Object>} The API response.
+     */
+    resendMessageDirectly: async (msgId, consumerGroup, topic) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/message/consumeMessageDirectly.do?msgId=${msgId}&consumerGroup=${consumerGroup}&topic=${topic}`), {
+                method: 'POST',
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error resending message directly:", error);
+            throw new Error("Failed to resend message directly");
+        }
+    },
+
+    queryProducerConnection: async (topic, producerGroup, callback) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/producer/producerConnection.query?topic=${topic}&producerGroup=${producerGroup}`));
+            const data = await response.json();
+            callback(data);
+        } catch (error) {
+            console.error("Error fetching producer connection list:", error);
+            callback({ status: 1, errMsg: "Failed to fetch producer connection list" }); // Simulate error response
         }
     },
 

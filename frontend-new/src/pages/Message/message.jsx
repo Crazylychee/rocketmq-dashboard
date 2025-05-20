@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, Form, Select, Input, Button, Table, Spin, DatePicker, Modal, Typography, notification } from 'antd';
 import moment from 'moment';
 import { SearchOutlined } from '@ant-design/icons';
 import { useLanguage } from '../../i18n/LanguageContext';
-import MessageDetailViewDialog from "../../components/MessageDetailViewDialog"; // 根据实际路径调整
+import MessageDetailViewDialog from "../../components/MessageDetailViewDialog"; // Keep this path
+import { remoteApi } from '../../api/remoteApi/remoteApi'; // Keep this path
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -26,6 +27,7 @@ const MessageQueryPage = () => {
         pageSize: 10,
         total: 0,
     });
+    const [taskId, setTaskId] = useState("");
 
     // Message Key 查询状态
     const [key, setKey] = useState('');
@@ -34,21 +36,48 @@ const MessageQueryPage = () => {
     // Message ID 查询状态
     const [messageId, setMessageId] = useState('');
 
-    useEffect(() => {
-        // 模拟加载所有 Topic 列表
+    // State for Message Detail Dialog
+    const [isMessageDetailModalVisible, setIsMessageDetailModalVisible] = useState(false);
+    const [currentMessageIdForDetail, setCurrentMessageIdForDetail] = useState(null);
+    const [currentTopicForDetail, setCurrentTopicForDetail] = useState(null);
+
+    const fetchAllTopics = useCallback(async () => {
         setLoading(true);
-        setTimeout(() => {
-            setAllTopicList(['TopicA', 'TopicB', 'TopicC', '%RETRY%GroupA']);
+        try {
+            const resp = await remoteApi.queryTopic();
+            if (resp.status === 0) {
+                setAllTopicList(resp.data.topicList.sort());
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg || t.FETCH_TOPIC_FAILED,
+                });
+            }
+        } catch (error) {
+            notification.error({
+                message: t.ERROR,
+                description: t.FETCH_TOPIC_FAILED,
+            });
+            console.error("Error fetching topic list:", error);
+        } finally {
             setLoading(false);
-        }, 500);
-    }, []);
+        }
+    }, [t]);
+
+    useEffect(() => {
+        fetchAllTopics();
+    }, [fetchAllTopics]);
 
     const onChangeQueryCondition = () => {
-        // 在实际应用中，这里可能触发一些状态更新或重新查询的逻辑
-        console.log("查询条件改变");
+        setTaskId("");
+        setPaginationConf(prev => ({
+            ...prev,
+            current: 1,
+            total: 0,
+        }));
     };
 
-    const queryMessagePageByTopic = async (page = 1, pageSize = 10) => {
+    const queryMessagePageByTopic = async (page = paginationConf.current, pageSize = paginationConf.pageSize) => {
         if (!selectedTopic) {
             notification.warning({
                 message: t.WARNING,
@@ -56,31 +85,42 @@ const MessageQueryPage = () => {
             });
             return;
         }
-        setLoading(true);
-        console.log("根据Topic查询消息:", { selectedTopic, timepickerBegin, timepickerEnd, page, pageSize });
-        try {
-            // 模拟 API 调用
-            const mockMessages = Array.from({ length: 25 }).map((_, i) => ({
-                msgId: `msg_${Date.now()}_${i}`,
-                topic: selectedTopic,
-                properties: { TAGS: `Tag${i % 3}`, KEYS: `Key${i}` },
-                storeTimestamp: moment().subtract(i * 10, 'minutes').valueOf(),
-            }));
+        if (timepickerEnd.valueOf() < timepickerBegin.valueOf()) {
+            notification.error({ message: t.ERROR, description: t.END_TIME_EARLIER_THAN_BEGIN_TIME });
+            return;
+        }
 
-            // 模拟分页
-            const startIndex = (page - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            setMessageShowList(mockMessages.slice(startIndex, endIndex));
-            setPaginationConf(prev => ({
-                ...prev,
-                current: page,
-                pageSize: pageSize,
-                total: mockMessages.length, // 实际应为后端返回的总数
-            }));
-            if (mockMessages.length === 0) {
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+        setLoading(true);
+        try {
+            const resp = await remoteApi.queryMessagePageByTopic(
+                selectedTopic,
+                timepickerBegin.valueOf(),
+                timepickerEnd.valueOf(),
+                page,
+                pageSize,
+                taskId
+            );
+
+            if (resp.status === 0) {
+                setMessageShowList(resp.data.page.content);
+                setPaginationConf(prev => ({
+                    ...prev,
+                    current: resp.data.page.number + 1,
+                    total: resp.data.page.totalElements,
+                    pageSize: pageSize,
+                }));
+                setTaskId(resp.data.taskId);
+
+                if (resp.data.page.content.length === 0) {
+                    notification.info({
+                        message: t.NO_RESULT,
+                        description: t.NO_MATCH_RESULT,
+                    });
+                }
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg || t.QUERY_FAILED,
                 });
             }
         } catch (error) {
@@ -103,20 +143,20 @@ const MessageQueryPage = () => {
             return;
         }
         setLoading(true);
-        console.log("根据Topic和Key查询消息:", { selectedTopic, key });
         try {
-            // 模拟 API 调用，只返回64条消息
-            const mockMessages = Array.from({ length: Math.min(64, Math.floor(Math.random() * 70)) }).map((_, i) => ({
-                msgId: `key_msg_${Date.now()}_${i}`,
-                topic: selectedTopic,
-                properties: { TAGS: `Tag${i % 2}`, KEYS: key },
-                storeTimestamp: moment().subtract(i * 5, 'minutes').valueOf(),
-            }));
-            setQueryMessageByTopicAndKeyResult(mockMessages);
-            if (mockMessages.length === 0) {
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+            const resp = await remoteApi.queryMessageByTopicAndKey(selectedTopic, key);
+            if (resp.status === 0) {
+                setQueryMessageByTopicAndKeyResult(resp.data);
+                if (resp.data.length === 0) {
+                    notification.info({
+                        message: t.NO_RESULT,
+                        description: t.NO_MATCH_RESULT,
+                    });
+                }
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg || t.QUERY_FAILED,
                 });
             }
         } catch (error) {
@@ -130,7 +170,8 @@ const MessageQueryPage = () => {
         }
     };
 
-    const queryMessageByMessageId = async (msgIdToQuery, topicToQuery) => {
+    // Updated to open the dialog
+    const showMessageDetail = (msgIdToQuery, topicToQuery) => {
         if (!msgIdToQuery) {
             notification.warning({
                 message: t.WARNING,
@@ -138,83 +179,64 @@ const MessageQueryPage = () => {
             });
             return;
         }
-        setLoading(true);
-        console.log("根据Message ID查询消息:", { msgId: msgIdToQuery, topic: topicToQuery });
-        try {
-            // 模拟 API 调用
-            const mockMessageDetail = {
-                msgId: msgIdToQuery,
-                topic: topicToQuery,
-                properties: { TAGS: 'TestTag', KEYS: 'TestKey' },
-                storeTimestamp: Date.now(),
-                messageBody: 'This is a mock message body content for the queried message.',
-            };
+        setCurrentMessageIdForDetail(msgIdToQuery);
+        setCurrentTopicForDetail(topicToQuery);
+        setIsMessageDetailModalVisible(true);
+    };
 
-            const mockMessageTrackList = [
-                { consumerGroup: 'GroupA', trackType: 'CONSUMED', exceptionDesc: null },
-                { consumerGroup: 'GroupB', trackType: 'NOT_CONSUMED_YET', exceptionDesc: 'Consumer offline' },
-                { consumerGroup: 'GroupC', trackType: 'CONSUME_FAILED', exceptionDesc: 'Deserialization error' },
-            ];
-
-            setLoading(false);
-            Modal.info({
-                title: t.MESSAGE_DETAIL,
-                width: 800,
-                content: (
-                    <MessageDetailViewDialog
-                        ngDialogData={{ messageView: mockMessageDetail, messageTrackList: mockMessageTrackList }}
-                        resendMessage={handleResendMessage}
-                        showExceptionDesc={handleShowExceptionDesc}
-                    />
-                ),
-                onOk: () => {}, // 确保 Modal 可以关闭
-                okText: t.CLOSE,
-            });
-
-        } catch (error) {
-            notification.error({
-                message: t.ERROR,
-                description: t.QUERY_FAILED,
-            });
-            console.error("查询失败:", error);
-        } finally {
-            setLoading(false);
-        }
+    const handleCloseMessageDetailModal = () => {
+        setIsMessageDetailModalVisible(false);
+        setCurrentMessageIdForDetail(null);
+        setCurrentTopicForDetail(null);
     };
 
     const handleResendMessage = async (messageView, consumerGroup) => {
-        setLoading(true);
-        console.log(`重发消息: MsgId=${messageView.msgId}, ConsumerGroup=${consumerGroup}`);
+        console.log(messageView.properties)
+        setLoading(true); // Set loading for the main page as well, as the dialog itself can't control it
+        let topicToResend = messageView.topic;
+        let msgIdToResend = messageView.msgId;
+
+
+        if (topicToResend.startsWith('%DLQ%')) {
+            if (messageView.properties && messageView.properties.hasOwnProperty("RETRY_TOPIC")) {
+                topicToResend = messageView.properties.RETRY_TOPIC;
+            }
+            if (messageView.properties && messageView.properties.hasOwnProperty("ORIGIN_MESSAGE_ID")) {
+                msgIdToResend = messageView.properties.ORIGIN_MESSAGE_ID;
+            }
+        }
+
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 模拟API调用
-            notification.success({
-                message: t.SUCCESS,
-                description: t.RESEND_SUCCESS,
-            });
-            Modal.info({
-                title: t.RESULT,
-                content: t.RESEND_SUCCESS_DETAIL,
-            });
+            const resp = await remoteApi.resendMessageDirectly(msgIdToResend, consumerGroup, topicToResend);
+            if (resp.status === 0) {
+                notification.success({
+                    message: t.SUCCESS,
+                    description: t.RESEND_SUCCESS,
+                });
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg || t.RESEND_FAILED,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
                 description: t.RESEND_FAILED,
             });
+            console.error("重发失败:", error);
         } finally {
             setLoading(false);
+            // Optionally, you might want to refresh the message detail after resend
+            // or close the modal if resend was successful and you don't need to see details immediately.
+            // For now, we'll keep the modal open and let the user close it.
         }
     };
 
-    const handleShowExceptionDesc = (desc) => {
-        Modal.info({
-            title: t.EXCEPTION_DETAILS,
-            content: desc || t.NO_EXCEPTION_DETAILS,
-            okText: t.CLOSE,
-        });
-    };
-
     const topicColumns = [
-        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center' },
+        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
+            render: (text) => <Text copyable>{text}</Text>
+        },
         { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
         { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
         {
@@ -229,7 +251,7 @@ const MessageQueryPage = () => {
             key: 'operation',
             align: 'center',
             render: (_, record) => (
-                <Button type="primary" size="small" onClick={() => queryMessageByMessageId(record.msgId, record.topic)}>
+                <Button type="primary" size="small" onClick={() => showMessageDetail(record.msgId, record.topic)}>
                     {t.MESSAGE_DETAIL}
                 </Button>
             ),
@@ -237,7 +259,9 @@ const MessageQueryPage = () => {
     ];
 
     const keyColumns = [
-        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center' },
+        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
+            render: (text) => <Text copyable>{text}</Text>
+        },
         { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
         { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
         {
@@ -252,7 +276,7 @@ const MessageQueryPage = () => {
             key: 'operation',
             align: 'center',
             render: (_, record) => (
-                <Button type="primary" size="small" onClick={() => queryMessageByMessageId(record.msgId, record.topic)}>
+                <Button type="primary" size="small" onClick={() => showMessageDetail(record.msgId, record.topic)}>
                     {t.MESSAGE_DETAIL}
                 </Button>
             ),
@@ -261,7 +285,7 @@ const MessageQueryPage = () => {
 
     return (
         <div style={{ padding: '20px' }}>
-            <Spin spinning={loading} tip="加载中...">
+            <Spin spinning={loading} tip={t.LOADING_DATA}>
                 <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
                     <TabPane tab="Topic" key="topic">
                         <h5 style={{ margin: '15px 0' }}>{t.TOTAL_MESSAGES}</h5>
@@ -367,7 +391,7 @@ const MessageQueryPage = () => {
                                 dataSource={queryMessageByTopicAndKeyResult}
                                 rowKey="msgId"
                                 bordered
-                                pagination={false} // Key查询通常不分页
+                                pagination={false}
                                 locale={{ emptyText: t.NO_MATCH_RESULT }}
                             />
                         </div>
@@ -402,7 +426,7 @@ const MessageQueryPage = () => {
                                     />
                                 </Form.Item>
                                 <Form.Item>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={() => queryMessageByMessageId(messageId, selectedTopic)}>
+                                    <Button type="primary" icon={<SearchOutlined />} onClick={() => showMessageDetail(messageId, selectedTopic)}>
                                         {t.SEARCH}
                                     </Button>
                                 </Form.Item>
@@ -412,6 +436,15 @@ const MessageQueryPage = () => {
                     </TabPane>
                 </Tabs>
             </Spin>
+
+            {/* Message Detail Dialog Component */}
+            <MessageDetailViewDialog
+                visible={isMessageDetailModalVisible}
+                onCancel={handleCloseMessageDetailModal}
+                messageId={currentMessageIdForDetail}
+                topic={currentTopicForDetail}
+                onResendMessage={handleResendMessage} // Pass the resend function
+            />
         </div>
     );
 };

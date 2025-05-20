@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, Form, Select, Input, Button, Table, Spin, DatePicker, Modal, Typography, notification, Checkbox } from 'antd';
 import moment from 'moment';
 import { SearchOutlined, SendOutlined, ExportOutlined } from '@ant-design/icons';
-import DlqMessageDetailViewDialog from "../../components/DlqMessageDetailViewDialog";
-import { useLanguage } from '../../i18n/LanguageContext';
+import DlqMessageDetailViewDialog from "../../components/DlqMessageDetailViewDialog"; // Ensure this path is correct
+import { useLanguage } from '../../i18n/LanguageContext'; // Ensure this path is correct
+import { remoteApi } from '../../api/remoteApi/remoteApi'; // Adjust the path to your remoteApi.js file
 
 const { TabPane } = Tabs;
 const { Option } = Select;
 const { Text, Paragraph } = Typography;
+
+const SYS_GROUP_TOPIC_PREFIX = "CID_RMQ_SYS_"; // Define this constant as in Angular
+const DLQ_GROUP_TOPIC_PREFIX = "%DLQ%"; // Define this constant
 
 const DlqMessageQueryPage = () => {
     const { t } = useLanguage();
@@ -18,30 +22,44 @@ const DlqMessageQueryPage = () => {
     // Consumer 查询状态
     const [allConsumerGroupList, setAllConsumerGroupList] = useState([]);
     const [selectedConsumerGroup, setSelectedConsumerGroup] = useState(null);
-    const [timepickerBegin, setTimepickerBegin] = useState(moment().subtract(1, 'hour')); // 默认一小时前
+    const [timepickerBegin, setTimepickerBegin] = useState(moment().subtract(3, 'hour')); // 默认三小时前
     const [timepickerEnd, setTimepickerEnd] = useState(moment());
     const [messageShowList, setMessageShowList] = useState([]);
     const [paginationConf, setPaginationConf] = useState({
         current: 1,
-        pageSize: 10,
+        pageSize: 20, // Adjusted to 20 as per Angular code
         total: 0,
     });
     const [checkedAll, setCheckedAll] = useState(false);
-    const [selectedMessageIds, setSelectedMessageIds] = useState(new Set());
+    const [selectedMessageIds, setSelectedMessageIds] = useState(new Set()); // Stores msgId for selected messages
+    const [messageCheckedList, setMessageCheckedList] = useState([]); // Stores full message objects for checked items
+    const [taskId, setTaskId] = useState("");
+
 
     // Message ID 查询状态
     const [messageId, setMessageId] = useState('');
     const [queryDlqMessageByMessageIdResult, setQueryDlqMessageByMessageIdResult] = useState([]);
 
+    // Fetch consumer group list on component mount
     useEffect(() => {
-        // 模拟加载所有消费者组列表
-        setLoading(true);
-        setTimeout(() => {
-            setAllConsumerGroupList(['ConsumerGroupA', 'ConsumerGroupB', 'ConsumerGroupC']);
+        const fetchConsumerGroups = async () => {
+            setLoading(true);
+            const resp = await remoteApi.queryConsumerGroupList();
+            if (resp.status === 0) {
+                const filteredGroups = resp.data
+                    .filter(consumerGroup => !consumerGroup.group.startsWith(SYS_GROUP_TOPIC_PREFIX))
+                    .map(consumerGroup => consumerGroup.group)
+                    .sort();
+                setAllConsumerGroupList(filteredGroups);
+            } else {
+                notification.error({ message: t.ERROR, description: resp.errMsg });
+            }
             setLoading(false);
-        }, 500);
-    }, []);
+        };
+        fetchConsumerGroups();
+    }, [t]);
 
+    // Effect to manage batch buttons' disabled state
     useEffect(() => {
         const batchResendBtn = document.getElementById('batchResendBtn');
         const batchExportBtn = document.getElementById('batchExportBtn');
@@ -54,12 +72,13 @@ const DlqMessageQueryPage = () => {
         }
     }, [selectedMessageIds]);
 
-    const onChangeQueryCondition = () => {
-        // 在实际应用中，这里可能触发一些状态更新或重新查询的逻辑
-        console.log("查询条件改变");
-    };
+    const onChangeQueryCondition = useCallback(() => {
+        // console.log("查询条件改变");
+        setTaskId(""); // Reset taskId when query conditions change
+        setPaginationConf(prev => ({ ...prev, currentPage: 1, totalItems: 0 }));
+    }, []);
 
-    const queryDlqMessageByConsumerGroup = async (page = 1, pageSize = 10) => {
+    const queryDlqMessageByConsumerGroup = useCallback(async (page = paginationConf.current, pageSize = paginationConf.pageSize) => {
         if (!selectedConsumerGroup) {
             notification.warning({
                 message: t.WARNING,
@@ -67,36 +86,48 @@ const DlqMessageQueryPage = () => {
             });
             return;
         }
-        setLoading(true);
-        console.log("根据消费者组查询DLQ消息:", { selectedConsumerGroup, timepickerBegin, timepickerEnd, page, pageSize });
-        try {
-            // 模拟 API 调用
-            const mockMessages = Array.from({ length: 25 }).map((_, i) => ({
-                msgId: `dlq_msg_${Date.now()}_${i}`,
-                topic: `%DLQ%${selectedConsumerGroup}`,
-                properties: { TAGS: `DLQTag${i % 3}`, KEYS: `DLQKey${i}` },
-                storeTimestamp: moment().subtract(i * 15, 'minutes').valueOf(),
-                checked: false, // 添加 checked 属性用于选择
-            }));
+        if (moment(timepickerEnd).valueOf() < moment(timepickerBegin).valueOf()) {
+            notification.error({ message: t.END_TIME_LATER_THAN_BEGIN_TIME, delay: 2000 });
+            return;
+        }
 
-            // 模拟分页
-            const startIndex = (page - 1) * pageSize;
-            const endIndex = startIndex + pageSize;
-            setMessageShowList(mockMessages.slice(startIndex, endIndex));
-            setPaginationConf(prev => ({
-                ...prev,
-                current: page,
-                pageSize: pageSize,
-                total: mockMessages.length, // 实际应为后端返回的总数
-            }));
-            if (mockMessages.length === 0) {
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+        setLoading(true);
+        // console.log("根据消费者组查询DLQ消息:", { selectedConsumerGroup, timepickerBegin, timepickerEnd, page, pageSize, taskId });
+        try {
+            const resp = await remoteApi.queryDlqMessageByConsumerGroup(
+                selectedConsumerGroup,
+                moment(timepickerBegin).valueOf(),
+                moment(timepickerEnd).valueOf(),
+                page,
+                pageSize,
+                taskId
+            );
+
+            if (resp.status === 0) {
+                const fetchedMessages = resp.data.page.content.map(msg => ({ ...msg, checked: false }));
+                setMessageShowList(fetchedMessages);
+                if (fetchedMessages.length === 0) {
+                    notification.info({
+                        message: t.NO_RESULT,
+                        description: t.NO_MATCH_RESULT,
+                    });
+                }
+                setPaginationConf(prev => ({
+                    ...prev,
+                    current: resp.data.page.number + 1,
+                    pageSize: pageSize,
+                    total: resp.data.page.totalElements,
+                }));
+                setTaskId(resp.data.taskId);
+                setSelectedMessageIds(new Set()); // Reset选中项
+                setCheckedAll(false); // Reset全选状态
+                setMessageCheckedList([]); // Clear checked list
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
                 });
             }
-            setSelectedMessageIds(new Set()); // 重置选中项
-            setCheckedAll(false); // 重置全选状态
         } catch (error) {
             notification.error({
                 message: t.ERROR,
@@ -106,10 +137,10 @@ const DlqMessageQueryPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedConsumerGroup, timepickerBegin, timepickerEnd, paginationConf.current, paginationConf.pageSize, taskId, t]);
 
-    const queryDlqMessageByMessageId = async (msgIdToQuery, consumerGroupToQuery) => {
-        if (!msgIdToQuery || !consumerGroupToQuery) {
+    const queryDlqMessageByMessageId = useCallback(async () => {
+        if (!messageId || !selectedConsumerGroup) {
             notification.warning({
                 message: t.WARNING,
                 description: t.MESSAGE_ID_AND_CONSUMER_GROUP_REQUIRED,
@@ -117,24 +148,21 @@ const DlqMessageQueryPage = () => {
             return;
         }
         setLoading(true);
-        console.log("根据Message ID查询DLQ消息:", { msgId: msgIdToQuery, consumerGroup: consumerGroupToQuery });
+        // console.log("根据Message ID查询DLQ消息:", { msgId: messageId, consumerGroup: selectedConsumerGroup });
         try {
-            // 模拟 API 调用
-            const mockDlqMessage = {
-                msgId: msgIdToQuery,
-                topic: `%DLQ%${consumerGroupToQuery}`,
-                properties: JSON.stringify({ TAGS: 'DLQTestTag', KEYS: 'DLQTestKey', RECONSUME_TIMES: '3' }),
-                reconsumeTimes: 3,
-                storeTimestamp: Date.now(),
-                storeHost: '192.168.1.1:10911',
-                messageBody: 'This is a mock DLQ message body content.',
-            };
-            setQueryDlqMessageByMessageIdResult([mockDlqMessage]);
-
-            if (!mockDlqMessage) { // 如果查询不到
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+            const resp = await remoteApi.viewMessage(messageId, DLQ_GROUP_TOPIC_PREFIX + selectedConsumerGroup);
+            if (resp.status === 0) {
+                setQueryDlqMessageByMessageIdResult(resp.data ? [resp.data] : []);
+                if (!resp.data) {
+                    notification.info({
+                        message: t.NO_RESULT,
+                        description: t.NO_MATCH_RESULT,
+                    });
+                }
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
                 });
             }
         } catch (error) {
@@ -146,35 +174,31 @@ const DlqMessageQueryPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [messageId, selectedConsumerGroup, t]);
 
-    const queryDlqMessageDetail = async (msgId, consumerGroup) => {
+    const queryDlqMessageDetail = useCallback(async (msgId, consumerGroup) => {
         setLoading(true);
-        console.log(`查询DLQ消息详情: ${msgId}, 消费者组: ${consumerGroup}`);
+        // console.log(`查询DLQ消息详情: ${msgId}, 消费者组: ${consumerGroup}`);
         try {
-            // 模拟获取消息详情的 API 调用
-            const mockMessageDetail = {
-                msgId: msgId,
-                topic: `%DLQ%${consumerGroup}`,
-                properties: { TAGS: 'DLQ_TAG', KEYS: 'DLQ_KEY', someProp: 'value' },
-                reconsumeTimes: 5,
-                storeTimestamp: Date.now(),
-                storeHost: '192.168.1.1:10911',
-                messageBody: 'This is the detailed body of the DLQ message.',
-            };
-
-            setLoading(false);
-            Modal.info({
-                title: t.MESSAGE_DETAIL,
-                width: 800,
-                content: (
-                    <DlqMessageDetailViewDialog
-                        ngDialogData={{ messageView: mockMessageDetail }}
-                    />
-                ),
-                onOk: () => {},
-                okText: t.CLOSE,
-            });
+            const resp = await remoteApi.viewMessage(msgId, DLQ_GROUP_TOPIC_PREFIX + consumerGroup);
+            if (resp.status === 0) {
+                Modal.info({
+                    title: t.MESSAGE_DETAIL,
+                    width: 800,
+                    content: (
+                        <DlqMessageDetailViewDialog
+                            ngDialogData={{ messageView: resp.data }}
+                        />
+                    ),
+                    onOk: () => {},
+                    okText: t.CLOSE,
+                });
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
@@ -184,57 +208,76 @@ const DlqMessageQueryPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [t]);
 
-    const resendDlqMessage = async (message, consumerGroup) => {
+    const resendDlqMessage = useCallback(async (messageView, consumerGroup) => {
         setLoading(true);
-        console.log(`重发DLQ消息: MsgId=${message.msgId}, 消费者组=${consumerGroup}`);
+        const topic = messageView.properties.RETRY_TOPIC;
+        const msgId = messageView.properties.ORIGIN_MESSAGE_ID;
+        // console.log(`重发DLQ消息: MsgId=${msgId}, Topic=${topic}, 消费者组=${consumerGroup}`);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 模拟API调用
-            notification.success({
-                message: t.SUCCESS,
-                description: t.RESEND_SUCCESS,
-            });
-            Modal.info({
-                title: t.RESULT,
-                content: t.RESEND_SUCCESS_DETAIL,
-            });
-            // 刷新列表
-            queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
+            const resp = await remoteApi.resendDlqMessage(msgId, consumerGroup, topic);
+            if (resp.status === 0) {
+                notification.success({
+                    message: t.SUCCESS,
+                    description: t.RESEND_SUCCESS,
+                });
+                Modal.info({
+                    title: t.RESULT,
+                    content: resp.data,
+                });
+                // Refresh list
+                queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
+                });
+                Modal.error({
+                    title: t.RESULT,
+                    content: resp.errMsg,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
                 description: t.RESEND_FAILED,
             });
+            console.error("重发失败:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [paginationConf.current, paginationConf.pageSize, queryDlqMessageByConsumerGroup, t]);
 
-    const exportDlqMessage = async (msgId, consumerGroup) => {
+    const exportDlqMessage = useCallback(async (msgId, consumerGroup) => {
         setLoading(true);
-        console.log(`导出DLQ消息: MsgId=${msgId}, 消费者组=${consumerGroup}`);
+        // console.log(`导出DLQ消息: MsgId=${msgId}, 消费者组=${consumerGroup}`);
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 模拟API调用
-            notification.success({
-                message: t.SUCCESS,
-                description: t.EXPORT_SUCCESS,
-            });
-            Modal.info({
-                title: t.RESULT,
-                content: t('EXPORT_SUCCESS_DETAIL', { msgId: msgId }),
-            });
+            const resp = await remoteApi.exportDlqMessage(msgId, consumerGroup);
+            if (resp.status === 0) {
+                notification.success({
+                    message: t.SUCCESS,
+                    description: t.EXPORT_SUCCESS,
+                });
+                // The actual file download is handled within remoteApi.js
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
                 description: t.EXPORT_FAILED,
             });
+            console.error("导出失败:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [t]);
 
-    const batchResendDlqMessage = async (consumerGroup) => {
+    const batchResendDlqMessage = useCallback(async () => {
         if (selectedMessageIds.size === 0) {
             notification.warning({
                 message: t.WARNING,
@@ -243,33 +286,50 @@ const DlqMessageQueryPage = () => {
             return;
         }
         setLoading(true);
-        const msgIdsToResend = Array.from(selectedMessageIds);
-        console.log(`批量重发DLQ消息到 ${consumerGroup}:`, msgIdsToResend);
+        const messagesToResend = messageCheckedList.map(message => ({
+            topic: message.properties.RETRY_TOPIC,
+            msgId: message.properties.ORIGIN_MESSAGE_ID,
+            consumerGroup: selectedConsumerGroup,
+        }));
+        // console.log(`批量重发DLQ消息到 ${selectedConsumerGroup}:`, messagesToResend);
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟批量API调用
-            notification.success({
-                message: t.SUCCESS,
-                description: t.BATCH_RESEND_SUCCESS,
-            });
-            Modal.info({
-                title: t.RESULT,
-                content: t('BATCH_RESEND_SUCCESS_DETAIL', { count: msgIdsToResend.length }),
-            });
-            // 刷新列表和重置选中状态
-            queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
-            setSelectedMessageIds(new Set());
-            setCheckedAll(false);
+            const resp = await remoteApi.batchResendDlqMessage(messagesToResend);
+            if (resp.status === 0) {
+                notification.success({
+                    message: t.SUCCESS,
+                    description: t.BATCH_RESEND_SUCCESS,
+                });
+                Modal.info({
+                    title: t.RESULT,
+                    content: resp.data,
+                });
+                // Refresh list and reset selected state
+                queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
+                setSelectedMessageIds(new Set());
+                setCheckedAll(false);
+                setMessageCheckedList([]);
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
+                });
+                Modal.error({
+                    title: t.RESULT,
+                    content: resp.errMsg,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
                 description: t.BATCH_RESEND_FAILED,
             });
+            console.error("批量重发失败:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedMessageIds, messageCheckedList, selectedConsumerGroup, paginationConf.current, paginationConf.pageSize, queryDlqMessageByConsumerGroup, t]);
 
-    const batchExportDlqMessage = async (consumerGroup) => {
+    const batchExportDlqMessage = useCallback(async () => {
         if (selectedMessageIds.size === 0) {
             notification.warning({
                 message: t.WARNING,
@@ -278,62 +338,85 @@ const DlqMessageQueryPage = () => {
             return;
         }
         setLoading(true);
-        const msgIdsToExport = Array.from(selectedMessageIds);
-        console.log(`批量导出DLQ消息从 ${consumerGroup}:`, msgIdsToExport);
+        const messagesToExport = messageCheckedList.map(message => ({
+            msgId: message.msgId,
+            consumerGroup: selectedConsumerGroup,
+        }));
+        // console.log(`批量导出DLQ消息从 ${selectedConsumerGroup}:`, messagesToExport);
         try {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // 模拟批量API调用
-            notification.success({
-                message: t.SUCCESS,
-                description: t.BATCH_EXPORT_SUCCESS,
-            });
-            Modal.info({
-                title: t.RESULT,
-                content: t('BATCH_EXPORT_SUCCESS_DETAIL', { count: msgIdsToExport.length }),
-            });
-            // 刷新列表和重置选中状态
-            queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
-            setSelectedMessageIds(new Set());
-            setCheckedAll(false);
+            const resp = await remoteApi.batchExportDlqMessage(messagesToExport);
+            if (resp.status === 0) {
+                notification.success({
+                    message: t.SUCCESS,
+                    description: t.BATCH_EXPORT_SUCCESS,
+                });
+                // The actual file download is handled within remoteApi.js
+                // Refresh list and reset selected state
+                queryDlqMessageByConsumerGroup(paginationConf.current, paginationConf.pageSize);
+                setSelectedMessageIds(new Set());
+                setCheckedAll(false);
+                setMessageCheckedList([]);
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: resp.errMsg,
+                });
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
                 description: t.BATCH_EXPORT_FAILED,
             });
+            console.error("批量导出失败:", error);
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedMessageIds, messageCheckedList, selectedConsumerGroup, paginationConf.current, paginationConf.pageSize, queryDlqMessageByConsumerGroup, t]);
 
     const handleSelectAll = (e) => {
         const checked = e.target.checked;
         setCheckedAll(checked);
         const newSelectedIds = new Set();
+        const newCheckedList = [];
         const updatedList = messageShowList.map(item => {
             if (checked) {
                 newSelectedIds.add(item.msgId);
+                newCheckedList.push(item);
             }
             return { ...item, checked };
         });
         setMessageShowList(updatedList);
         setSelectedMessageIds(newSelectedIds);
+        setMessageCheckedList(newCheckedList);
     };
 
     const handleSelectItem = (item, checked) => {
         const newSelectedIds = new Set(selectedMessageIds);
+        const newCheckedList = [...messageCheckedList];
+
         if (checked) {
             newSelectedIds.add(item.msgId);
+            newCheckedList.push(item);
         } else {
             newSelectedIds.delete(item.msgId);
+            const index = newCheckedList.findIndex(msg => msg.msgId === item.msgId);
+            if (index > -1) {
+                newCheckedList.splice(index, 1);
+            }
         }
         setSelectedMessageIds(newSelectedIds);
+        setMessageCheckedList(newCheckedList);
 
-        // 更新单项选中状态，并检查是否全选
+        // Update single item checked state in the displayed list
         const updatedList = messageShowList.map(msg =>
             msg.msgId === item.msgId ? { ...msg, checked } : msg
         );
         setMessageShowList(updatedList);
+
+        // Check if all are selected
         setCheckedAll(newSelectedIds.size === updatedList.length && updatedList.length > 0);
     };
+
 
     const consumerColumns = [
         {
@@ -355,8 +438,12 @@ const DlqMessageQueryPage = () => {
             ),
         },
         { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center' },
-        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
-        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
+        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center',
+            render: (tags) => tags || '-' // Display '-' if tags are null or undefined
+        },
+        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center',
+            render: (keys) => keys || '-' // Display '-' if keys are null or undefined
+        },
         {
             title: 'StoreTime',
             dataIndex: 'storeTimestamp',
@@ -386,8 +473,12 @@ const DlqMessageQueryPage = () => {
 
     const messageIdColumns = [
         { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center' },
-        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
-        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
+        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center',
+            render: (tags) => tags || '-'
+        },
+        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center',
+            render: (keys) => keys || '-'
+        },
         {
             title: 'StoreTime',
             dataIndex: 'storeTimestamp',
@@ -474,7 +565,7 @@ const DlqMessageQueryPage = () => {
                                         id="batchResendBtn"
                                         type="primary"
                                         icon={<SendOutlined />}
-                                        onClick={() => batchResendDlqMessage(selectedConsumerGroup)}
+                                        onClick={batchResendDlqMessage}
                                         disabled={selectedMessageIds.size === 0}
                                     >
                                         {t.BATCH_RESEND}
@@ -485,7 +576,7 @@ const DlqMessageQueryPage = () => {
                                         id="batchExportBtn"
                                         type="primary"
                                         icon={<ExportOutlined />}
-                                        onClick={() => batchExportDlqMessage(selectedConsumerGroup)}
+                                        onClick={batchExportDlqMessage}
                                         disabled={selectedMessageIds.size === 0}
                                     >
                                         {t.BATCH_EXPORT}
@@ -502,6 +593,8 @@ const DlqMessageQueryPage = () => {
                                     pageSize: paginationConf.pageSize,
                                     total: paginationConf.total,
                                     onChange: (page, pageSize) => queryDlqMessageByConsumerGroup(page, pageSize),
+                                    showSizeChanger: true, // Allow changing page size
+                                    pageSizeOptions: ['10', '20', '50', '100'], // Customizable page size options
                                 }}
                                 locale={{ emptyText: t.NO_MATCH_RESULT }}
                             />
@@ -537,7 +630,7 @@ const DlqMessageQueryPage = () => {
                                     />
                                 </Form.Item>
                                 <Form.Item>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={() => queryDlqMessageByMessageId(messageId, selectedConsumerGroup)}>
+                                    <Button type="primary" icon={<SearchOutlined />} onClick={queryDlqMessageByMessageId}>
                                         {t.SEARCH}
                                     </Button>
                                 </Form.Item>

@@ -2,15 +2,18 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { App as AntdApp } from 'antd';
 import reportWebVitals from './reportWebVitals';
 import {LanguageProvider} from "./i18n/LanguageContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <LanguageProvider>
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
+        <React.StrictMode>
+            <AntdApp>
+                <App/>
+            </AntdApp>
+        </React.StrictMode>
     </LanguageProvider>
 );
 

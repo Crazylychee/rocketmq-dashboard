@@ -107,12 +107,6 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
                     </Button>
                 </Dropdown>
 
-                <Dropdown overlay={versionMenu}>
-                    <Button size="small">
-                        {!isExtraSmallScreen && t.CHANGE_VERSION}
-                        <DownOutlined />
-                    </Button>
-                </Dropdown>
                 {username && (
                     <Dropdown overlay={userMenu}>
                         <Button icon={<UserOutlined />} size="small">

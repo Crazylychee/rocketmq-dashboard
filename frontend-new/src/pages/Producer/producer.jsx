@@ -1,11 +1,38 @@
-import React from 'react';
-import { Select, Table, Input, Button } from 'antd';
-import { useLanguage } from "../../i18n/LanguageContext";
+import React, { useState, useEffect } from 'react';
+import { Form, Select, Input, Button, Table, message } from 'antd';
+import {remoteApi} from '../../api/remoteApi/remoteApi'; // Adjust path if needed
 
 const { Option } = Select;
 
-const DeployHistoryList = ({ allTopicList = [], selectedTopic, setSelectedTopic, producerGroup, setProducerGroup, connectionList = [], queryClientByTopicAndGroup }) => {
-    const { t } = useLanguage();
+const ProducerConnectionList = () => {
+    const [form] = Form.useForm();
+    const [allTopicList, setAllTopicList] = useState([]);
+    const [connectionList, setConnectionList] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        // Fetch topic list on component mount
+        remoteApi.queryTopic((resp) => {
+            if (resp.status === 0) {
+                setAllTopicList(resp.data.topicList.sort());
+            } else {
+                message.error(resp.errMsg || "Failed to fetch topic list");
+            }
+        });
+    }, []);
+
+    const onFinish = (values) => {
+        setLoading(true);
+        const { selectedTopic, producerGroup } = values;
+        remoteApi.queryProducerConnection(selectedTopic, producerGroup, (resp) => {
+            if (resp.status === 0) {
+                setConnectionList(resp.data.connectionSet);
+            } else {
+                message.error(resp.errMsg || "Failed to fetch producer connection list");
+            }
+            setLoading(false);
+        });
+    };
 
     const columns = [
         {
@@ -35,46 +62,46 @@ const DeployHistoryList = ({ allTopicList = [], selectedTopic, setSelectedTopic,
     ];
 
     return (
-        <div className="container-fluid" id="deployHistoryList" role="main">
-            <form className="form-inline pull-left col-sm-12">
-                <div className="form-group">
-                    <label>{t.TOPIC}:</label>
+        <div className="container-fluid" id="deployHistoryList">
+            <Form
+                form={form}
+                layout="inline"
+                onFinish={onFinish}
+                style={{ marginBottom: 20 }}
+            >
+                <Form.Item label="TOPIC" name="selectedTopic" rules={[{ required: true, message: 'Please select a topic!' }]}>
                     <Select
-                        style={{width: 300}}
-                        value={selectedTopic}
-                        onChange={setSelectedTopic}
-                        placeholder={t.SELECT_TOPIC}
-                        required
+                        showSearch
+                        placeholder="Select a topic"
+                        style={{ width: 300 }}
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                        }
                     >
-                        <Option value="">请选择</Option>
-                        {allTopicList.map((item, index) => (
-                            <Option key={index} value={item}>{item}</Option>
+                        {allTopicList.map((topic) => (
+                            <Option key={topic} value={topic}>{topic}</Option>
                         ))}
                     </Select>
-
-                    <label htmlFor="producerGroup">{t.PRODUCER_GROUP}:</label>
-                    <Input
-                        id="ProducerGroup"
-                        style={{width: 300}}
-                        type="text"
-                        value={producerGroup}
-                        onChange={(e) => setProducerGroup(e.target.value)}
-                        required
-                    />
-                    <Button type="primary" onClick={queryClientByTopicAndGroup}>
-                        <span className="glyphicon glyphicon-search"></span>{t.SEARCH}
+                </Form.Item>
+                <Form.Item label="PRODUCER_GROUP" name="producerGroup" rules={[{ required: true, message: 'Please input producer group!' }]}>
+                    <Input style={{ width: 300 }} />
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit" loading={loading}>
+                        <span className="glyphicon glyphicon-search"></span> SEARCH
                     </Button>
-                </div>
-
-            </form>
+                </Form.Item>
+            </Form>
             <Table
-                columns={columns}
                 dataSource={connectionList}
-                rowKey="clientId"
+                columns={columns}
+                rowKey="clientId" // Assuming clientId is unique
                 pagination={false}
+                bordered
             />
         </div>
     );
 };
 
-export default DeployHistoryList;
+export default ProducerConnectionList;
