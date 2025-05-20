@@ -242,13 +242,13 @@ const DeployHistoryList = () => {
                 const configResult = await remoteApi.getTopicConfig(topicName);
                 if (configResult.status === 0) {
                     setTopicModifyData({
-                        clusterNameList: configResult.data.clusterNameList || [],
-                        brokerNameList: configResult.data.brokerNameList || [],
+                        clusterNameList: configResult.data[0].clusterNameList || [],
+                        brokerNameList: configResult.data[0].brokerNameList || [],
                         topicName: topicName,
-                        messageType: configResult.data.messageType || 'NORMAL',
-                        writeQueueNums: configResult.data.writeQueueNums || 8,
-                        readQueueNums: configResult.data.readQueueNums || 8,
-                        perm: configResult.data.perm || 7,
+                        messageType: configResult.data[0].messageType || 'NORMAL',
+                        writeQueueNums: configResult.data[0].writeQueueNums || 8,
+                        readQueueNums: configResult.data[0].readQueueNums || 8,
+                        perm: configResult.data[0].perm || 7,
                     });
                 } else {
                     message.error(configResult.errMsg);
@@ -265,16 +265,16 @@ const DeployHistoryList = () => {
                     perm: 7,
                 });
             }
-            const clusterResult = await remoteApi.getClusterList();
-            if (clusterResult.status === 0) {
-                setAllClusterNameList(Object.keys(clusterResult.data.clusterInfo.clusterAddrTable));
-                setAllBrokerNameList(Object.keys(clusterResult.data.brokerServer));
-            } else {
-                message.error(clusterResult.errMsg);
-            }
         } catch (error) {
             console.error("Error opening add/update dialog:", error);
             message.error("Failed to open dialog");
+        }
+        const clusterResult = await remoteApi.getClusterList();
+        if (clusterResult.status === 0) {
+            setAllClusterNameList(Object.keys(clusterResult.data.clusterInfo.clusterAddrTable));
+            setAllBrokerNameList(Object.keys(clusterResult.data.brokerServer));
+        } else {
+            message.error(clusterResult.errMsg);
         }
         setIsAddUpdateTopicModalVisible(true);
     };

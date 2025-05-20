@@ -1,6 +1,11 @@
 export const translations = {
     zh: {
+        "CONFIRM_DELETE": "确认删除",
+        "CANCEL": "取消",
+        "SELECT_DELETE_BROKERS":"请选择在哪个Broker删除消费者组",
+        "DELETE_CONSUMER_GROUP":"删除消费者组",
         "ENGLISH": "英文",
+        "ADD_CONSUMER":"添加消费者",
         "CHINESE": "简体中文",
         "CANNOT_BE_EMPTY": "不能为空",
         "TITLE": "RocketMQ仪表板",

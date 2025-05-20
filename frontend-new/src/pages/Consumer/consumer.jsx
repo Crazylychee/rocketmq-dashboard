@@ -2,6 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Input, Button, Checkbox, Switch, Spin, Modal, notification } from 'antd';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { remoteApi } from '../../api/remoteApi/remoteApi';
+import ClientInfoModal from "../../components/consumer/ClientInfoModal";
+import ConsumerDetailModal from "../../components/consumer/ConsumerDetailModal";
+import ConsumerConfigModal from "../../components/consumer/ConsumerConfigModal";
+import DeleteConsumerModal from "../../components/consumer/DeleteConsumerModal";
 
 const ConsumerGroupList = () => {
     const { t } = useLanguage();
@@ -15,11 +19,21 @@ const ConsumerGroupList = () => {
     const [loading, setLoading] = useState(false);
     const [consumerGroupShowList, setConsumerGroupShowList] = useState([]);
     const [allConsumerGroupList, setAllConsumerGroupList] = useState([]);
+    const [selectedGroup, setSelectedGroup] = useState(null);
+    const [selectedAddress, setSelectedAddress] = useState(null);
+    const [showClientInfo, setShowClientInfo] = useState(false);
+    const [showConsumeDetail, setShowConsumeDetail] = useState(false);
+    const [showConfig, setShowConfig] = useState(false);
+    const [isAddConfig,setIsAddConfig] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+
     const [paginationConf, setPaginationConf] = useState({
         current: 1,
         pageSize: 10,
         total: 0,
     });
+
     const [sortConfig, setSortConfig] = useState({
         sortKey: null,
         sortOrder: 1,
@@ -172,57 +186,32 @@ const ConsumerGroupList = () => {
     };
 
     const handleOpenAddDialog = () => {
-        Modal.info({
-            title: t.ADD_UPDATE,
-            content: t.ADD_UPDATE_CONTENT,
-            onOk() { },
-        });
+        setIsAddConfig(true)
+        setShowConfig(true);
     };
 
+    // 修改操作按钮的点击处理函数
     const handleClient = (group, address) => {
-        Modal.info({
-            title: t.CLIENT_INFO,
-            content: `Group: ${group}, Address: ${address}`,
-            onOk() { },
-        });
+        setSelectedGroup(group);
+        setSelectedAddress(address);
+        setShowClientInfo(true);
     };
 
     const handleDetail = (group, address) => {
-        Modal.info({
-            title: t.CONSUME_DETAIL,
-            content: `Group: ${group}, Address: ${address}`,
-            onOk() { },
-        });
+        setSelectedGroup(group);
+        setSelectedAddress(address);
+        setShowConsumeDetail(true);
     };
 
     const handleUpdateConfigDialog = (group) => {
-        Modal.info({
-            title: t.CONFIG,
-            content: `Group: ${group}`,
-            onOk() { },
-        });
+        setSelectedGroup(group);
+        setShowConfig(true);
     };
 
-    const handleDelete = async (group) => {
-        Modal.confirm({
-            title: t.DELETE_CONFIRM_TITLE,
-            content: `${t.DELETE_CONFIRM_CONTENT} ${group}?`,
-            async onOk() {
-                const brokerListResponse = await remoteApi.fetchBrokerNameList(group);
-                if (brokerListResponse.status === 0) {
-                    const deleteResponse = await remoteApi.deleteConsumerGroup(group, brokerListResponse.data);
-                    if (deleteResponse.status === 0) {
-                        Modal.success({ content: t.DELETE_SUCCESS });
-                        loadConsumerGroups();
-                    } else {
-                        Modal.error({ title: t.ERROR, content: deleteResponse.errMsg });
-                    }
-                } else {
-                    Modal.error({ title: t.ERROR, content: brokerListResponse.errMsg });
-                }
-            },
-            onCancel() { },
-        });
+
+    const handleDelete = (group) => {
+        setSelectedGroup(group);
+        setShowDeleteModal(true);
     };
 
     const handleRefreshConsumerGroup = async (group) => {
@@ -401,12 +390,12 @@ const ConsumerGroupList = () => {
                         <Button type="primary" onClick={handleRefreshConsumerData}>
                             {t.REFRESH}
                         </Button>
-                        <Switch
-                            checked={intervalProcessSwitch}
-                            onChange={(checked) => setIntervalProcessSwitch(checked)}
-                            checkedChildren={t.AUTO_REFRESH}
-                            unCheckedChildren={t.AUTO_REFRESH}
-                        />
+                        {/*<Switch*/}
+                        {/*    checked={intervalProcessSwitch}*/}
+                        {/*    onChange={(checked) => setIntervalProcessSwitch(checked)}*/}
+                        {/*    checkedChildren={t.AUTO_REFRESH}*/}
+                        {/*    unCheckedChildren={t.AUTO_REFRESH}*/}
+                        {/*/>*/}
                     </div>
                 </div>
 
@@ -420,6 +409,35 @@ const ConsumerGroupList = () => {
                     sortDirections={['ascend', 'descend']}
                 />
             </Spin>
+
+            <ClientInfoModal
+                visible={showClientInfo}
+                group={selectedGroup}
+                address={selectedAddress}
+                onCancel={() => setShowClientInfo(false)}
+            />
+
+            <ConsumerDetailModal
+                visible={showConsumeDetail}
+                group={selectedGroup}
+                address={selectedAddress}
+                onCancel={() => setShowConsumeDetail(false)}
+            />
+
+            <ConsumerConfigModal
+                visible={showConfig}
+                isAddConfig={isAddConfig}
+                group={selectedGroup}
+                onCancel={() => setShowConfig(false)}
+                onSuccess={loadConsumerGroups}
+            />
+
+            <DeleteConsumerModal
+                visible={showDeleteModal}
+                group={selectedGroup}
+                onCancel={() => setShowDeleteModal(false)}
+                onSuccess={loadConsumerGroups}
+            />
         </div>
     );
 };

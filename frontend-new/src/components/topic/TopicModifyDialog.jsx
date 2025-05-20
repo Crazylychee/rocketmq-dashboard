@@ -14,7 +14,6 @@ const TopicModifyDialog = ({
                                t,
                            }) => {
     const [form] = Form.useForm();
-    const [forceUpdate, setForceUpdate] = useState(0);
 
     useEffect(() => {
         if (visible && initialData) {
@@ -22,14 +21,22 @@ const TopicModifyDialog = ({
             form.setFieldsValue(initialData);
         } else {
             form.resetFields();
-            setForceUpdate(0);
         }
     }, [visible, initialData, form]);
 
     const handleFormSubmit = () => {
         form.validateFields()
             .then(values => {
-                onSubmit(values);
+                // *** Modification Start ***
+                const updatedValues = { ...values };
+                if (!updatedValues.clusterNameList || updatedValues.clusterNameList.length === 0) {
+                    updatedValues.clusterNameList = allClusterNameList;
+                }
+                if (!updatedValues.brokerNameList || updatedValues.brokerNameList.length === 0) {
+                    updatedValues.brokerNameList = allBrokerNameList;
+                }
+                onSubmit(updatedValues);
+                // *** Modification End ***
             })
             .catch(info => {
                 console.log('Validate Failed:', info);
@@ -84,6 +91,7 @@ const TopicModifyDialog = ({
                 <Form.Item
                     label={t.TOPIC_NAME}
                     name="topicName"
+                    defaultValue={initialData.topicName}
                     rules={[{ required: true, message: `${t.TOPIC_NAME}${t.CANNOT_BE_EMPTY}` }]}
                 >
                     <Input
