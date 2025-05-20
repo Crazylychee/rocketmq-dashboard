@@ -1,5 +1,5 @@
 import { Button, Form, Input, Modal, Select } from "antd";
-import React, { useEffect } from "react";
+import React, {useEffect, useState} from "react";
 
 const TopicModifyDialog = ({
                                visible,
@@ -11,15 +11,20 @@ const TopicModifyDialog = ({
                                allBrokerNameList,
                                allMessageTypeList,
                                onSubmit,
-                               t
+                               onInputChange,
+                               t,
                            }) => {
     const [form] = Form.useForm();
+    const [forceUpdate, setForceUpdate] = useState(0);
+
 
     useEffect(() => {
-        if (visible) {
+        if (visible && initialData) {
+            console.log("Setting form values:", initialData);
             form.setFieldsValue(initialData);
         } else {
             form.resetFields();
+            setForceUpdate(0);
         }
     }, [visible, initialData, form]);
 
@@ -93,21 +98,30 @@ const TopicModifyDialog = ({
                     name="writeQueueNums"
                     rules={[{ required: true, message: `${t.WRITE_QUEUE_NUMS}${t.CANNOT_BE_EMPTY}` }]}
                 >
-                    <Input disabled={!writeOperationEnabled} /> {/* 仅根据 writeOperationEnabled 禁用 */}
+                    <Input
+                        disabled={!writeOperationEnabled}
+                        onChange={onInputChange} // 绑定 onChange 事件
+                    />
                 </Form.Item>
                 <Form.Item
                     label={t.READ_QUEUE_NUMS}
                     name="readQueueNums"
                     rules={[{ required: true, message: `${t.READ_QUEUE_NUMS}${t.CANNOT_BE_EMPTY}` }]}
                 >
-                    <Input disabled={!writeOperationEnabled} /> {/* 仅根据 writeOperationEnabled 禁用 */}
+                    <Input
+                        disabled={!writeOperationEnabled}
+                        onChange={onInputChange}
+                    />
                 </Form.Item>
                 <Form.Item
                     label={t.PERM}
                     name="perm"
                     rules={[{ required: true, message: `${t.PERM}${t.CANNOT_BE_EMPTY}` }]}
                 >
-                    <Input disabled={!writeOperationEnabled} />
+                    <Input
+                        disabled={!writeOperationEnabled} // 注意这里没有 bIsUpdate 的禁用
+                        onChange={onInputChange}
+                    />
                 </Form.Item>
             </Form>
         </Modal>

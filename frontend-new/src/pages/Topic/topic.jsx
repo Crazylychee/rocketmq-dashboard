@@ -8,7 +8,6 @@ import {
     Input,
     Form,
     message,
-    Select,
     Popconfirm
 } from 'antd';
 import { useLanguage } from '../../i18n/LanguageContext';
@@ -23,7 +22,6 @@ import StatsViewDialog from "../../components/topic/StatsViewDialog";
 import RouterViewDialog from "../../components/topic/RouterViewDialog";
 import SendTopicMessageDialog from "../../components/topic/SendTopicMessageDialog";
 
-const { Option } = Select;
 
 const DeployHistoryList = () => {
     const { t } = useLanguage();
@@ -274,11 +272,11 @@ const DeployHistoryList = () => {
             } else {
                 message.error(clusterResult.errMsg);
             }
-            setIsAddUpdateTopicModalVisible(true);
         } catch (error) {
             console.error("Error opening add/update dialog:", error);
             message.error("Failed to open dialog");
         }
+        setIsAddUpdateTopicModalVisible(true);
     };
 
     // Post Topic Request (Add/Update)
@@ -414,6 +412,14 @@ const DeployHistoryList = () => {
         setCurrentTopicForDialogs(topic);
         setSendTopicMessageData(prev => ({ ...prev, topic }));
         setIsSendTopicMessageModalVisible(true);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setSendTopicMessageData(prevData => ({
+            ...prevData,
+            [name]: value,
+        }));
     };
 
     // Handle Reset Offset
@@ -653,6 +659,7 @@ const DeployHistoryList = () => {
                 allBrokerNameList={allBrokerNameList || []}
                 allMessageTypeList={allMessageTypeList || {}}
                 onSubmit={postTopicRequest}
+                onInputChange={handleInputChange}
                 t={t}
             />
 

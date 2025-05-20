@@ -2,6 +2,7 @@ export const translations = {
     zh: {
         "ENGLISH": "英文",
         "CHINESE": "简体中文",
+        "CANNOT_BE_EMPTY": "不能为空",
         "TITLE": "RocketMQ仪表板",
         "CLOSE": "关闭",
         "NO": "编号",
