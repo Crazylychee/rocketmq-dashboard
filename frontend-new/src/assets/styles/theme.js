@@ -6,7 +6,7 @@ const theme = {
     },
     components: {
         Button: {
-            colorPrimary: '#1c324a', // 按钮主题色
+            colorPrimary: '#1c324a', // 普通按钮主题色
         },
         Layout: {
             headerBg: '#1c324a', // 设置 Header 的背景色为 #1c324a

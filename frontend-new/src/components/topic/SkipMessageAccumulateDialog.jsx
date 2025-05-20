@@ -1,7 +1,7 @@
-import {Button, Form, message, Modal, Select} from "antd";
-import React, {useEffect, useState} from "react";
+import { Button, Form, message, Modal, Select } from "antd";
+import React, { useEffect, useState } from "react";
 
-const SkipMessageAccumulateDialog = ({ visible, onClose, topic, allConsumerGroupList, t }) => {
+const SkipMessageAccumulateDialog = ({ visible, onClose, topic, allConsumerGroupList, handleSkipMessageAccumulate, t }) => {
     const [form] = Form.useForm();
     const [selectedConsumerGroup, setSelectedConsumerGroup] = useState([]);
 
@@ -12,14 +12,14 @@ const SkipMessageAccumulateDialog = ({ visible, onClose, topic, allConsumerGroup
         }
     }, [visible, form]);
 
-    const skipAccumulate = () => {
+    const handleCommit = () => {
         if (!selectedConsumerGroup.length) {
-            message.error(t.PLEASE_SELECT_GROUP); // Assuming you have this translation key
+            message.error(t.PLEASE_SELECT_GROUP);
             return;
         }
         console.log(`Skipping message accumulate for topic: ${topic}, groups: ${selectedConsumerGroup}`);
-        // Implement API call
-        message.success(t.SKIP_MESSAGE_ACCUMULATE_SUCCESS);
+        // 调用父组件传递的处理函数，并传递选中的消费者组
+        handleSkipMessageAccumulate(selectedConsumerGroup);
         onClose();
     };
 
@@ -29,7 +29,7 @@ const SkipMessageAccumulateDialog = ({ visible, onClose, topic, allConsumerGroup
             open={visible}
             onCancel={onClose}
             footer={[
-                <Button key="commit" type="primary" onClick={skipAccumulate}>
+                <Button key="commit" type="primary" onClick={handleCommit}>
                     {t.COMMIT}
                 </Button>,
                 <Button key="close" onClick={onClose}>

@@ -1,5 +1,5 @@
 import { Button, Form, Input, Modal, Select } from "antd";
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 
 const TopicModifyDialog = ({
                                visible,
@@ -9,14 +9,12 @@ const TopicModifyDialog = ({
                                writeOperationEnabled,
                                allClusterNameList,
                                allBrokerNameList,
-                               allMessageTypeList,
                                onSubmit,
                                onInputChange,
                                t,
                            }) => {
     const [form] = Form.useForm();
     const [forceUpdate, setForceUpdate] = useState(0);
-
 
     useEffect(() => {
         if (visible && initialData) {
@@ -37,6 +35,13 @@ const TopicModifyDialog = ({
                 console.log('Validate Failed:', info);
             });
     };
+
+    const messageTypeOptions = [ // 定义消息类型选项
+        { value: 'TRANSACTION', label: 'TRANSACTION' },
+        { value: 'FIFO', label: 'FIFO' },
+        { value: 'DELAY', label: 'DELAY' },
+        { value: 'NORMAL', label: 'NORMAL' },
+    ];
 
     return (
         <Modal
@@ -63,15 +68,15 @@ const TopicModifyDialog = ({
                 <Form.Item label={t.CLUSTER_NAME} name="clusterNameList">
                     <Select
                         mode="multiple"
-                        disabled={bIsUpdate} // 更新模式下禁用
+                        disabled={bIsUpdate}
                         placeholder={t.SELECT_CLUSTER_NAME}
                         options={allClusterNameList.map(name => ({ value: name, label: name }))}
                     />
                 </Form.Item>
-                <Form.Item label={t.BROKER_NAME} name="brokerNameList">
+                <Form.Item label="BROKER_NAME" name="brokerNameList">
                     <Select
                         mode="multiple"
-                        disabled={bIsUpdate} // 更新模式下禁用
+                        disabled={bIsUpdate}
                         placeholder={t.SELECT_BROKER_NAME}
                         options={allBrokerNameList.map(name => ({ value: name, label: name }))}
                     />
@@ -81,16 +86,16 @@ const TopicModifyDialog = ({
                     name="topicName"
                     rules={[{ required: true, message: `${t.TOPIC_NAME}${t.CANNOT_BE_EMPTY}` }]}
                 >
-                    <Input disabled={bIsUpdate} /> {/* 更新模式下禁用 */}
+                    <Input
+                        disabled={bIsUpdate}
+                        onChange={onInputChange}
+                    />
                 </Form.Item>
                 <Form.Item label={t.MESSAGE_TYPE} name="messageType">
                     <Select
-                        disabled={bIsUpdate} // 更新模式下禁用
-                        options={Object.entries(allMessageTypeList).map(([key, value]) => ({
-                            value: key,
-                            label: value,
-                            disabled: key === 'UNSPECIFIED'
-                        }))}
+                        disabled={bIsUpdate}
+                        options={messageTypeOptions}
+                        defaultValue="NORMAL"
                     />
                 </Form.Item>
                 <Form.Item
@@ -100,7 +105,7 @@ const TopicModifyDialog = ({
                 >
                     <Input
                         disabled={!writeOperationEnabled}
-                        onChange={onInputChange} // 绑定 onChange 事件
+                        onChange={onInputChange}
                     />
                 </Form.Item>
                 <Form.Item
@@ -119,7 +124,7 @@ const TopicModifyDialog = ({
                     rules={[{ required: true, message: `${t.PERM}${t.CANNOT_BE_EMPTY}` }]}
                 >
                     <Input
-                        disabled={!writeOperationEnabled} // 注意这里没有 bIsUpdate 的禁用
+                        disabled={!writeOperationEnabled}
                         onChange={onInputChange}
                     />
                 </Form.Item>

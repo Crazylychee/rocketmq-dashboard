@@ -303,7 +303,7 @@ const DeployHistoryList = () => {
             if (result.status === 0) {
                 message.success(`${t.TOPIC} [${topicToDelete}] ${t.DELETED_SUCCESSFULLY}`);
                 setAllTopicList(allTopicList.filter(topic => topic !== topicToDelete));
-                filterList(paginationConf.current);
+                await refreshTopicList()
             } else {
                 message.error(result.errMsg);
             }
@@ -422,12 +422,14 @@ const DeployHistoryList = () => {
         }));
     };
 
-    // Handle Reset Offset
-    const handleResetOffset = async () => {
+    const handleResetOffset = async (consumerGroupList, resetTime) => {
         try {
+            console.log(1111);
+            console.log('传递的消费者组:', consumerGroupList);
+            console.log('传递的时间:', resetTime);
             const result = await remoteApi.resetConsumerOffset({
-                resetTime: resetOffsetTime.valueOf(),
-                consumerGroupList: selectedConsumerGroups,
+                resetTime: resetTime, // 使用传递过来的 resetTime
+                consumerGroupList: consumerGroupList, // 使用传递过来的 consumerGroupList
                 topic: currentTopicForDialogs,
                 force: true
             });
@@ -444,18 +446,17 @@ const DeployHistoryList = () => {
         }
     };
 
-    // Handle Skip Message Accumulate
-    const handleSkipMessageAccumulate = async () => {
+    const handleSkipMessageAccumulate = async (consumerGroupListFromDialog) => {
         try {
             const result = await remoteApi.skipMessageAccumulate({
                 resetTime: -1,
-                consumerGroupList: selectedConsumerGroups,
-                topic: currentTopicForDialogs,
+                consumerGroupList: consumerGroupListFromDialog, // 使用子组件传递的 consumerGroupList
+                topic: currentTopicForDialogs, // 使用父组件中管理的 topic
                 force: true
             });
             if (result.status === 0) {
-                setResetOffsetResultData(result.data);
-                setIsResetOffsetResultModalVisible(true);
+                setResetOffsetResultData(result.data); // 注意这里使用了 setResetOffsetResultData，确认这是你期望的
+                setIsResetOffsetResultModalVisible(true); // 注意这里使用了 setIsResetOffsetResultModalVisible，确认这是你期望的
                 setIsSkipMessageAccumulateModalVisible(false);
             } else {
                 message.error(result.errMsg);
@@ -463,24 +464,6 @@ const DeployHistoryList = () => {
         } catch (error) {
             console.error("Error skipping message accumulate:", error);
             message.error("Failed to skip message accumulate");
-        }
-    };
-
-
-    // Delete Topic by Broker
-    const deleteTopicByBroker = async (brokerName) => {
-        try {
-            const result = await remoteApi.deleteTopicByBroker(brokerName, currentTopicForDialogs);
-            if (result.status === 0) {
-                message.success("Delete success");
-                setIsRouterViewModalVisible(false);
-                refreshTopicList();
-            } else {
-                message.error(result.errMsg);
-            }
-        } catch (error) {
-            console.error("Error deleting topic by broker:", error);
-            message.error("Failed to delete topic by broker");
         }
     };
 
@@ -523,12 +506,12 @@ const DeployHistoryList = () => {
                             </Button>
                         )}
                         {!sysFlag && writeOperationEnabled && (
-                            <Button type="danger" size="small" onClick={() => openConsumerResetOffsetDialog(topicName)}>
+                            <Button type="primary" danger size="small" onClick={() => openConsumerResetOffsetDialog(topicName)}>
                                 {t.RESET_CUS_OFFSET}
                             </Button>
                         )}
                         {!sysFlag && writeOperationEnabled && (
-                            <Button type="danger" size="small" onClick={() => openSkipMessageAccumulateDialog(topicName)}>
+                            <Button type="primary" danger size="small" onClick={() => openSkipMessageAccumulateDialog(topicName)}>
                                 {t.SKIP_MESSAGE_ACCUMULATE}
                             </Button>
                         )}
@@ -539,7 +522,7 @@ const DeployHistoryList = () => {
                                 okText={t.YES}
                                 cancelText={t.NO}
                             >
-                                <Button type="danger" size="small">
+                                <Button type="primary" danger size="small">
                                     {t.DELETE}
                                 </Button>
                             </Popconfirm>
@@ -657,7 +640,6 @@ const DeployHistoryList = () => {
                 writeOperationEnabled={writeOperationEnabled}
                 allClusterNameList={allClusterNameList || []}
                 allBrokerNameList={allBrokerNameList || []}
-                allMessageTypeList={allMessageTypeList || {}}
                 onSubmit={postTopicRequest}
                 onInputChange={handleInputChange}
                 t={t}
@@ -677,6 +659,7 @@ const DeployHistoryList = () => {
                 onClose={closeConsumerResetOffsetDialog} // 传递关闭函数
                 topic={currentTopicForDialogs}
                 allConsumerGroupList={allConsumerGroupList}
+                handleResetOffset={handleResetOffset}
                 t={t}
             />
 
@@ -685,6 +668,7 @@ const DeployHistoryList = () => {
                 onClose={closeSkipMessageAccumulateDialog} // 传递关闭函数
                 topic={currentTopicForDialogs}
                 allConsumerGroupList={allConsumerGroupList}
+                handleSkipMessageAccumulate={handleSkipMessageAccumulate}
                 t={t}
             />
 

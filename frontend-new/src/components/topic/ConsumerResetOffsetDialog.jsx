@@ -1,12 +1,13 @@
-import {Button, DatePicker, Form, message, Modal, Select} from "antd";
-import React, {useEffect, useState} from "react";
+import { Button, DatePicker, Form, Modal, Select } from "antd";
+import React, { useEffect, useState } from "react";
 
-const ConsumerResetOffsetDialog = ({ visible, onClose, topic, allConsumerGroupList, t }) => {
+const ConsumerResetOffsetDialog = ({ visible, onClose, topic, allConsumerGroupList, handleResetOffset, t }) => {
     const [form] = Form.useForm();
     const [selectedConsumerGroup, setSelectedConsumerGroup] = useState([]);
     const [selectedTime, setSelectedTime] = useState(null);
 
     useEffect(() => {
+        console.log("handleResetOffset prop in child:", handleResetOffset);
         if (!visible) {
             setSelectedConsumerGroup([]);
             setSelectedTime(null);
@@ -14,23 +15,8 @@ const ConsumerResetOffsetDialog = ({ visible, onClose, topic, allConsumerGroupLi
         }
     }, [visible, form]);
 
-    const resetOffset = () => {
-        if (!selectedConsumerGroup.length || !selectedTime) {
-            message.error(t.PLEASE_SELECT_GROUP_AND_TIME); // Assuming you have this translation key
-            return;
-        }
-        console.log(`Resetting offset for topic: ${topic}, groups: ${selectedConsumerGroup}, time: ${selectedTime.format('YYYY-MM-DD HH:mm:ss')}`);
-        // Simulate API call and then show result dialog
-        const mockResult = {};
-        selectedConsumerGroup.forEach(group => {
-            mockResult[group] = {
-                status: 'SUCCESS', // or 'FAILED'
-                rollbackStatsList: ['Mock Stat 1', 'Mock Stat 2'] // or null
-            };
-        });
-        message.success(t.RESET_OFFSET_SUCCESS);
-        // In a real app, you'd trigger showing the ResetOffsetResultDialog with mockResult
-        onClose();
+    const handleResetButtonClick = () => {
+        handleResetOffset(selectedConsumerGroup, selectedTime ? selectedTime.valueOf() : null);
     };
 
     return (
@@ -39,7 +25,7 @@ const ConsumerResetOffsetDialog = ({ visible, onClose, topic, allConsumerGroupLi
             open={visible}
             onCancel={onClose}
             footer={[
-                <Button key="reset" type="primary" onClick={resetOffset}>
+                <Button key="reset" type="primary" onClick={handleResetButtonClick}>
                     {t.RESET}
                 </Button>,
                 <Button key="close" onClick={onClose}>

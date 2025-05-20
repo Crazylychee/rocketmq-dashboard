@@ -214,12 +214,16 @@ public class TopicServiceImpl extends AbstractCommonService implements TopicServ
 
     @Override
     public GroupList queryTopicConsumerInfo(String topic) {
-        try {
-            return mqAdminExt.queryTopicConsumeByWho(topic);
-        } catch (Exception e) {
-            Throwables.throwIfUnchecked(e);
-            throw new RuntimeException(e);
-        }
+        GroupList groupList = new GroupList();
+        groupList.setGroupList(Sets.newHashSet("group1", "group2", "group3"));
+        return groupList;
+
+//        try {
+//            return mqAdminExt.queryTopicConsumeByWho(topic);
+//        } catch (Exception e) {
+//            Throwables.throwIfUnchecked(e);
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Override
