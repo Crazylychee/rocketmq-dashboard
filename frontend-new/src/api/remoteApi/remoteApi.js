@@ -41,6 +41,156 @@ const remoteApi = {
             callback({ status: 1, errMsg: "Failed to fetch topic list" }); // Simulate error response
         }
     },
+
+    queryConsumerGroupList: async (skipSysGroup = false) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/groupList.query?skipSysGroup=${skipSysGroup}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error fetching consumer group list:", error);
+            return { status: 1, errMsg: "Failed to fetch consumer group list" };
+        }
+    },
+
+    refreshConsumerGroup: async (consumerGroup) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/group.refresh?consumerGroup=${consumerGroup}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error refreshing consumer group ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to refresh consumer group ${consumerGroup}` };
+        }
+    },
+
+    refreshAllConsumerGroup: async () => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/consumer/group.refresh.all"));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error refreshing all consumer groups:", error);
+            return { status: 1, errMsg: "Failed to refresh all consumer groups" };
+        }
+    },
+
+    queryConsumerMonitorConfig: async (consumeGroupName) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/monitor/consumerMonitorConfigByGroupName.query?consumeGroupName=${consumeGroupName}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching monitor config for ${consumeGroupName}:`, error);
+            return { status: 1, errMsg: `Failed to fetch monitor config for ${consumeGroupName}` };
+        }
+    },
+
+    createOrUpdateConsumerMonitor: async (consumeGroupName, minCount, maxDiffTotal) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/monitor/createOrUpdateConsumerMonitor.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ consumeGroupName, minCount, maxDiffTotal })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error creating or updating consumer monitor:", error);
+            return { status: 1, errMsg: "Failed to create or update consumer monitor" };
+        }
+    },
+
+    fetchBrokerNameList: async (consumerGroup) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/fetchBrokerNameList.query?consumerGroup=${consumerGroup}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching broker name list for ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to fetch broker name list for ${consumerGroup}` };
+        }
+    },
+
+    deleteConsumerGroup: async (groupName, brokerNameList) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/consumer/deleteSubGroup.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ groupName, brokerNameList })
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error deleting consumer group ${groupName}:`, error);
+            return { status: 1, errMsg: `Failed to delete consumer group ${groupName}` };
+        }
+    },
+
+    queryConsumerConfig: async (consumerGroup) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/examineSubscriptionGroupConfig.query?consumerGroup=${consumerGroup}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching consumer config for ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to fetch consumer config for ${consumerGroup}` };
+        }
+    },
+
+    createOrUpdateConsumer: async (consumerRequest) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl("/consumer/createOrUpdate.do"), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(consumerRequest)
+            });
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error creating or updating consumer:", error);
+            return { status: 1, errMsg: "Failed to create or update consumer" };
+        }
+    },
+
+    queryTopicByConsumer: async (consumerGroup, address) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/queryTopicByConsumer.query?consumerGroup=${consumerGroup}&address=${address}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching topics for consumer group ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to fetch topics for consumer group ${consumerGroup}` };
+        }
+    },
+
+    queryConsumerConnection: async (consumerGroup, address) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/consumerConnection.query?consumerGroup=${consumerGroup}&address=${address}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching consumer connections for ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to fetch consumer connections for ${consumerGroup}` };
+        }
+    },
+
+    queryConsumerRunningInfo: async (consumerGroup, clientId, jstack = false) => {
+        try {
+            const response = await fetch(remoteApi.buildUrl(`/consumer/consumerRunningInfo.query?consumerGroup=${consumerGroup}&clientId=${clientId}&jstack=${jstack}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error(`Error fetching running info for client ${clientId} in group ${consumerGroup}:`, error);
+            return { status: 1, errMsg: `Failed to fetch running info for client ${clientId} in group ${consumerGroup}` };
+        }
+    },
     queryTopicList: async () => {
         try {
             const response = await fetch(remoteApi.buildUrl("/topic/list.queryTopicType"));

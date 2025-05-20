@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Input, Button, Checkbox, Switch, Spin, Modal, Select } from 'antd';
-import { useLanguage } from '../../i18n/LanguageContext'; // 根据实际路径调整
-
-const { Option } = Select;
+import React, { useState, useEffect, useCallback } from 'react';
+import { Table, Input, Button, Checkbox, Switch, Spin, Modal, notification } from 'antd';
+import { useLanguage } from '../../i18n/LanguageContext';
+import { remoteApi } from '../../api/remoteApi/remoteApi';
 
 const ConsumerGroupList = () => {
     const { t } = useLanguage();
@@ -10,116 +9,246 @@ const ConsumerGroupList = () => {
     const [filterNormal, setFilterNormal] = useState(true);
     const [filterFIFO, setFilterFIFO] = useState(false);
     const [filterSystem, setFilterSystem] = useState(false);
-    const [rmqVersion, setRmqVersion] = useState(true); // 假设rmqVersion是一个状态或prop
-    const [writeOperationEnabled, setWriteOperationEnabled] = useState(true); // 假设权限
+    const [rmqVersion, setRmqVersion] = useState(true);
+    const [writeOperationEnabled, setWriteOperationEnabled] = useState(true);
     const [intervalProcessSwitch, setIntervalProcessSwitch] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [consumerGroupShowList, setConsumerGroupShowList] = useState([]); // 实际数据
+    const [consumerGroupShowList, setConsumerGroupShowList] = useState([]);
+    const [allConsumerGroupList, setAllConsumerGroupList] = useState([]);
     const [paginationConf, setPaginationConf] = useState({
         current: 1,
         pageSize: 10,
         total: 0,
     });
+    const [sortConfig, setSortConfig] = useState({
+        sortKey: null,
+        sortOrder: 1,
+    });
 
-    // 假设的数据，你需要从API获取
-    useEffect(() => {
+    const loadConsumerGroups = useCallback(async () => {
         setLoading(true);
-        // 模拟API调用
-        setTimeout(() => {
-            const mockData = [
-                {
-                    group: 'MyConsumerGroup1',
-                    count: 5,
-                    version: '4.9.0',
-                    consumeType: 'COMPLEX',
-                    messageModel: 'CLUSTERING',
-                    consumeTps: 120,
-                    diffTotal: 1000,
-                    updateTime: '2023-05-15 10:00:00',
-                    address: '192.168.1.1:9876',
-                },
-                {
-                    group: '%SYS%SystemConsumer',
-                    count: 2,
-                    version: '4.9.0',
-                    consumeType: 'SIMPLE',
-                    messageModel: 'BROADCASTING',
-                    consumeTps: 50,
-                    diffTotal: 200,
-                    updateTime: '2023-05-15 11:30:00',
-                    address: '192.168.1.2:9876',
-                },
-                // 更多数据...
-            ];
-            setConsumerGroupShowList(mockData);
-            setPaginationConf(prev => ({ ...prev, total: mockData.length }));
+        try {
+            const response = await remoteApi.queryConsumerGroupList(true);
+            if (response.status === 0) {
+                setAllConsumerGroupList(response.data);
+                filterList(1, response.data);
+            } else {
+                Modal.error({ title: t.ERROR, content: response.errMsg });
+            }
+        } catch (error) {
+            Modal.error({ title: t.ERROR, content: t.FAILED_TO_FETCH_DATA });
+            console.error("Error loading consumer groups:", error);
+        } finally {
             setLoading(false);
-        }, 1000);
-    }, []);
+        }
+    }, [t]);
+
+    const filterByType = (str, type, version) => {
+        if (filterSystem && type === "SYSTEM") return true;
+        if (filterNormal && (type === "NORMAL" || (!version && type === "FIFO"))) return true;
+        if (filterFIFO && type === "FIFO") return true;
+        return false;
+    };
+
+    const filterList = useCallback((currentPage, data) => {
+        // 排序处理
+        let sortedData = [...data];
+        if (sortConfig.sortKey) {
+            sortedData.sort((a, b) => {
+                const aValue = a[sortConfig.sortKey];
+                const bValue = b[sortConfig.sortKey];
+                if (typeof aValue === 'string') {
+                    return sortConfig.sortOrder * aValue.localeCompare(bValue);
+                }
+                return sortConfig.sortOrder * (aValue > bValue ? 1 : -1);
+            });
+        }
+
+        // 过滤处理
+        const lowExceptStr = filterStr.toLowerCase();
+        const canShowList = sortedData.filter(element =>
+            filterByType(element.group, element.subGroupType, rmqVersion) &&
+            element.group.toLowerCase().includes(lowExceptStr)
+        );
+
+        // 更新分页和显示列表
+        const perPage = paginationConf.pageSize;
+        const from = (currentPage - 1) * perPage;
+        const to = from + perPage;
+
+        setPaginationConf(prev => ({
+            ...prev,
+            current: currentPage,
+            total: canShowList.length,
+        }));
+        setConsumerGroupShowList(canShowList.slice(from, to));
+    }, [filterStr, filterNormal, filterSystem, filterFIFO, rmqVersion, sortConfig, paginationConf.pageSize]);
 
 
-    const handleRefreshConsumerData = () => {
-        console.log("刷新消费者数据");
-        // 这里需要调用实际的API来获取最新数据
+    const doSort = useCallback(() => {
+        const sortedList = [...allConsumerGroupList];
+
+        if (sortConfig.sortKey === 'diffTotal') {
+            sortedList.sort((a, b) => {
+                return (a.diffTotal > b.diffTotal) ? sortConfig.sortOrder :
+                    ((b.diffTotal > a.diffTotal) ? -sortConfig.sortOrder : 0);
+            });
+        }
+        if (sortConfig.sortKey === 'group') {
+            sortedList.sort((a, b) => {
+                return (a.group > b.group) ? sortConfig.sortOrder :
+                    ((b.group > a.group) ? -sortConfig.sortOrder : 0);
+            });
+        }
+        if (sortConfig.sortKey === 'count') {
+            sortedList.sort((a, b) => {
+                return (a.count > b.count) ? sortConfig.sortOrder :
+                    ((b.count > a.count) ? -sortConfig.sortOrder : 0);
+            });
+        }
+        if (sortConfig.sortKey === 'consumeTps') {
+            sortedList.sort((a, b) => {
+                return (a.consumeTps > b.consumeTps) ? sortConfig.sortOrder :
+                    ((b.consumeTps > a.consumeTps) ? -sortConfig.sortOrder : 0);
+            });
+        }
+
+        setAllConsumerGroupList(sortedList);
+        filterList(paginationConf.current, sortedList);
+    }, [sortConfig, allConsumerGroupList, paginationConf.current]);
+
+    useEffect(() => {
+        loadConsumerGroups();
+    }, [loadConsumerGroups]);
+
+    useEffect(() => {
+        let intervalId;
+        if (intervalProcessSwitch) {
+            intervalId = setInterval(loadConsumerGroups, 10000);
+        }
+        return () => clearInterval(intervalId);
+    }, [intervalProcessSwitch, loadConsumerGroups]);
+
+
+    useEffect(() => {
+        filterList(paginationConf.current, allConsumerGroupList);
+    }, [allConsumerGroupList, filterStr, filterNormal, filterSystem, filterFIFO, sortConfig, filterList, paginationConf.current]);
+
+    const handleFilterInputChange = (value) => {
+        setFilterStr(value);
+        setPaginationConf(prev => ({ ...prev, current: 1 }));
+    };
+
+    const handleTypeFilterChange = (filterType, checked) => {
+        switch (filterType) {
+            case 'normal':
+                setFilterNormal(checked);
+                break;
+            case 'fifo':
+                setFilterFIFO(checked);
+                break;
+            case 'system':
+                setFilterSystem(checked);
+                break;
+            default:
+                break;
+        }
+        setPaginationConf(prev => ({ ...prev, current: 1 }));
+    };
+
+    const handleRefreshConsumerData = async () => {
+        setLoading(true);
+        const refreshResult = await remoteApi.refreshAllConsumerGroup();
+        setLoading(false);
+
+        if (refreshResult && refreshResult.status === 0) {
+            notification.success({ message: t.REFRESH_SUCCESS, duration: 2 });
+            loadConsumerGroups();
+        } else if (refreshResult && refreshResult.errMsg) {
+            notification.error({ message: t.REFRESH_FAILED + ": " + refreshResult.errMsg, duration: 2 });
+        } else {
+            notification.error({ message: t.REFRESH_FAILED, duration: 2 });
+        }
     };
 
     const handleOpenAddDialog = () => {
-        console.log("打开添加/更新对话框");
-        // 触发打开 Add/Update 对话框的逻辑
+        Modal.info({
+            title: t.ADD_UPDATE,
+            content: t.ADD_UPDATE_CONTENT,
+            onOk() { },
+        });
     };
 
     const handleClient = (group, address) => {
-        console.log(`查看客户端信息: ${group}, ${address}`);
-        // 触发打开客户端信息对话框的逻辑
         Modal.info({
             title: t.CLIENT_INFO,
             content: `Group: ${group}, Address: ${address}`,
-            onOk() {},
+            onOk() { },
         });
     };
 
     const handleDetail = (group, address) => {
-        console.log(`查看消费详情: ${group}, ${address}`);
-        // 触发打开消费详情对话框的逻辑
         Modal.info({
             title: t.CONSUME_DETAIL,
             content: `Group: ${group}, Address: ${address}`,
-            onOk() {},
+            onOk() { },
         });
     };
 
     const handleUpdateConfigDialog = (group) => {
-        console.log(`更新配置: ${group}`);
-        // 触发打开配置对话框的逻辑
         Modal.info({
             title: t.CONFIG,
             content: `Group: ${group}`,
-            onOk() {},
+            onOk() { },
         });
     };
 
-    const handleDelete = (group) => {
-        console.log(`删除消费者组: ${group}`);
-        // 触发打开删除对话框的逻辑
+    const handleDelete = async (group) => {
         Modal.confirm({
             title: t.DELETE_CONFIRM_TITLE,
             content: `${t.DELETE_CONFIRM_CONTENT} ${group}?`,
-            onOk() {
-                console.log(`确认删除 ${group}`);
-                // 执行删除操作
+            async onOk() {
+                const brokerListResponse = await remoteApi.fetchBrokerNameList(group);
+                if (brokerListResponse.status === 0) {
+                    const deleteResponse = await remoteApi.deleteConsumerGroup(group, brokerListResponse.data);
+                    if (deleteResponse.status === 0) {
+                        Modal.success({ content: t.DELETE_SUCCESS });
+                        loadConsumerGroups();
+                    } else {
+                        Modal.error({ title: t.ERROR, content: deleteResponse.errMsg });
+                    }
+                } else {
+                    Modal.error({ title: t.ERROR, content: brokerListResponse.errMsg });
+                }
             },
-            onCancel() {},
+            onCancel() { },
         });
     };
 
-    const handleRefreshConsumerGroup = (group) => {
-        console.log(`刷新消费者组: ${group}`);
-        // 刷新单个消费者组数据
+    const handleRefreshConsumerGroup = async (group) => {
+        setLoading(true);
+        const response = await remoteApi.refreshConsumerGroup(group);
+        setLoading(false);
+        if (response.status === 0) {
+            Modal.success({ content: `${group} ${t.REFRESHED}` });
+            loadConsumerGroups();
+        } else {
+            Modal.error({ title: t.ERROR, content: response.errMsg });
+        }
+    };
+
+
+    const handleSort = (sortKey) => {
+        setSortConfig(prev => ({
+            sortKey,
+            sortOrder: prev.sortKey === sortKey ? -prev.sortOrder : 1,
+        }));
+        setPaginationConf(prev => ({ ...prev, current: 1 }));
     };
 
     const columns = [
         {
-            title: <a onClick={() => console.log('sort by group')}>{t.SUBSCRIPTION_GROUP}</a>,
+            title: <a onClick={() => handleSort('group')}>{t.SUBSCRIPTION_GROUP}</a>,
             dataIndex: 'group',
             key: 'group',
             align: 'center',
@@ -133,7 +262,7 @@ const ConsumerGroupList = () => {
             },
         },
         {
-            title: <a onClick={() => console.log('sort by count')}>{t.QUANTITY}</a>,
+            title: <a onClick={() => handleSort('count')}>{t.QUANTITY}</a>,
             dataIndex: 'count',
             key: 'count',
             align: 'center',
@@ -157,13 +286,13 @@ const ConsumerGroupList = () => {
             align: 'center',
         },
         {
-            title: <a onClick={() => console.log('sort by consumeTps')}>TPS</a>,
+            title: <a onClick={() => handleSort('consumeTps')}>TPS</a>,
             dataIndex: 'consumeTps',
             key: 'consumeTps',
             align: 'center',
         },
         {
-            title: <a onClick={() => console.log('sort by diffTotal')}>{t.DELAY}</a>,
+            title: <a onClick={() => handleSort('diffTotal')}>{t.DELAY}</a>,
             dataIndex: 'diffTotal',
             key: 'diffTotal',
             align: 'center',
@@ -216,7 +345,8 @@ const ConsumerGroupList = () => {
                         </Button>
                         {!sysFlag && writeOperationEnabled && (
                             <Button
-                                type="danger"
+                                type="primary"
+                                danger
                                 size="small"
                                 style={{ marginRight: 8, marginBottom: 8 }}
                                 onClick={() => handleDelete(record.group)}
@@ -231,13 +361,17 @@ const ConsumerGroupList = () => {
     ];
 
     const handleTableChange = (pagination) => {
-        setPaginationConf(pagination);
-        // 这里可以根据pagination的变化来重新获取数据或进行前端分页
+        setPaginationConf(prev => ({
+            ...prev,
+            current: pagination.current,
+            pageSize: pagination.pageSize
+        }));
+        filterList(pagination.current, allConsumerGroupList);
     };
 
     return (
         <div style={{ padding: '20px' }}>
-            <Spin spinning={loading} tip="Loading...">
+            <Spin spinning={loading} tip={t.LOADING}>
                 <div style={{ marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -245,18 +379,18 @@ const ConsumerGroupList = () => {
                             <Input
                                 style={{ width: '200px' }}
                                 value={filterStr}
-                                onChange={(e) => setFilterStr(e.target.value)}
+                                onChange={(e) => handleFilterInputChange(e.target.value)}
                             />
                         </div>
-                        <Checkbox checked={filterNormal} onChange={(e) => setFilterNormal(e.target.checked)}>
+                        <Checkbox checked={filterNormal} onChange={(e) => handleTypeFilterChange('normal', e.target.checked)}>
                             {t.NORMAL}
                         </Checkbox>
                         {rmqVersion && (
-                            <Checkbox checked={filterFIFO} onChange={(e) => setFilterFIFO(e.target.checked)}>
+                            <Checkbox checked={filterFIFO} onChange={(e) => handleTypeFilterChange('fifo', e.target.checked)}>
                                 {t.FIFO}
                             </Checkbox>
                         )}
-                        <Checkbox checked={filterSystem} onChange={(e) => setFilterSystem(e.target.checked)}>
+                        <Checkbox checked={filterSystem} onChange={(e) => handleTypeFilterChange('system', e.target.checked)}>
                             {t.SYSTEM}
                         </Checkbox>
                         {writeOperationEnabled && (
@@ -281,12 +415,9 @@ const ConsumerGroupList = () => {
                     columns={columns}
                     rowKey="group"
                     bordered
-                    pagination={{
-                        current: paginationConf.current,
-                        pageSize: paginationConf.pageSize,
-                        total: paginationConf.total,
-                        onChange: handleTableChange,
-                    }}
+                    pagination={paginationConf}
+                    onChange={handleTableChange}
+                    sortDirections={['ascend', 'descend']}
                 />
             </Spin>
         </div>

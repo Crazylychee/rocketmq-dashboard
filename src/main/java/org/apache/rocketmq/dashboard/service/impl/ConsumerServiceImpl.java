@@ -180,7 +180,7 @@ public class ConsumerServiceImpl extends AbstractCommonService implements Consum
         try {
             ClusterInfo clusterInfo = clusterInfoService.get();
             for (BrokerData brokerData : clusterInfo.getBrokerAddrTable().values()) {
-                subscriptionGroupWrapper = mqAdminExt.getAllSubscriptionGroup(brokerData.selectBrokerAddr(), 3000L);
+                subscriptionGroupWrapper = mqAdminExt.getAllSubscriptionGroup(brokerData.selectBrokerAddr(), 30000L);
                 for (String groupName : subscriptionGroupWrapper.getSubscriptionGroupTable().keySet()) {
                     if (!consumerGroupMap.containsKey(groupName)) {
                         consumerGroupMap.putIfAbsent(groupName, new ArrayList<>());
