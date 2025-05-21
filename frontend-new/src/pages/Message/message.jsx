@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Tabs, Form, Select, Input, Button, Table, Spin, DatePicker, Modal, Typography, notification } from 'antd';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Button, DatePicker, Form, Input, notification, Select, Spin, Table, Tabs, Typography} from 'antd';
 import moment from 'moment';
-import { SearchOutlined } from '@ant-design/icons';
-import { useLanguage } from '../../i18n/LanguageContext';
+import {SearchOutlined} from '@ant-design/icons';
+import {useLanguage} from '../../i18n/LanguageContext';
 import MessageDetailViewDialog from "../../components/MessageDetailViewDialog"; // Keep this path
-import { remoteApi } from '../../api/remoteApi/remoteApi'; // Keep this path
+import {remoteApi} from '../../api/remoteApi/remoteApi'; // Keep this path
 
-const { TabPane } = Tabs;
-const { Option } = Select;
-const { Text, Paragraph } = Typography;
+const {TabPane} = Tabs;
+const {Option} = Select;
+const {Text, Paragraph} = Typography;
 
 const MessageQueryPage = () => {
-    const { t } = useLanguage();
+    const {t} = useLanguage();
     const [activeTab, setActiveTab] = useState('topic');
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -40,6 +40,7 @@ const MessageQueryPage = () => {
     const [isMessageDetailModalVisible, setIsMessageDetailModalVisible] = useState(false);
     const [currentMessageIdForDetail, setCurrentMessageIdForDetail] = useState(null);
     const [currentTopicForDetail, setCurrentTopicForDetail] = useState(null);
+    const [notificationApi, notificationContextHolder] = notification.useNotification();
 
     const fetchAllTopics = useCallback(async () => {
         setLoading(true);
@@ -48,13 +49,13 @@ const MessageQueryPage = () => {
             if (resp.status === 0) {
                 setAllTopicList(resp.data.topicList.sort());
             } else {
-                notification.error({
+                notificationApi.error({
                     message: t.ERROR,
                     description: resp.errMsg || t.FETCH_TOPIC_FAILED,
                 });
             }
         } catch (error) {
-            notification.error({
+            notificationApi.error({
                 message: t.ERROR,
                 description: t.FETCH_TOPIC_FAILED,
             });
@@ -79,14 +80,14 @@ const MessageQueryPage = () => {
 
     const queryMessagePageByTopic = async (page = paginationConf.current, pageSize = paginationConf.pageSize) => {
         if (!selectedTopic) {
-            notification.warning({
+            notificationApi.warning({
                 message: t.WARNING,
                 description: t.PLEASE_SELECT_TOPIC,
             });
             return;
         }
         if (timepickerEnd.valueOf() < timepickerBegin.valueOf()) {
-            notification.error({ message: t.ERROR, description: t.END_TIME_EARLIER_THAN_BEGIN_TIME });
+            notificationApi.error({message: t.ERROR, description: t.END_TIME_EARLIER_THAN_BEGIN_TIME});
             return;
         }
 
@@ -112,19 +113,19 @@ const MessageQueryPage = () => {
                 setTaskId(resp.data.taskId);
 
                 if (resp.data.page.content.length === 0) {
-                    notification.info({
+                    notificationApi.info({
                         message: t.NO_RESULT,
                         description: t.NO_MATCH_RESULT,
                     });
                 }
             } else {
-                notification.error({
+                notificationApi.error({
                     message: t.ERROR,
                     description: resp.errMsg || t.QUERY_FAILED,
                 });
             }
         } catch (error) {
-            notification.error({
+            notificationApi.error({
                 message: t.ERROR,
                 description: t.QUERY_FAILED,
             });
@@ -136,7 +137,7 @@ const MessageQueryPage = () => {
 
     const queryMessageByTopicAndKey = async () => {
         if (!selectedTopic || !key) {
-            notification.warning({
+            notificationApi.warning({
                 message: t.WARNING,
                 description: t.TOPIC_AND_KEY_REQUIRED,
             });
@@ -148,19 +149,19 @@ const MessageQueryPage = () => {
             if (resp.status === 0) {
                 setQueryMessageByTopicAndKeyResult(resp.data);
                 if (resp.data.length === 0) {
-                    notification.info({
+                    notificationApi.info({
                         message: t.NO_RESULT,
                         description: t.NO_MATCH_RESULT,
                     });
                 }
             } else {
-                notification.error({
+                notificationApi.error({
                     message: t.ERROR,
                     description: resp.errMsg || t.QUERY_FAILED,
                 });
             }
         } catch (error) {
-            notification.error({
+            notificationApi.error({
                 message: t.ERROR,
                 description: t.QUERY_FAILED,
             });
@@ -173,7 +174,7 @@ const MessageQueryPage = () => {
     // Updated to open the dialog
     const showMessageDetail = (msgIdToQuery, topicToQuery) => {
         if (!msgIdToQuery) {
-            notification.warning({
+            notificationApi.warning({
                 message: t.WARNING,
                 description: t.MESSAGE_ID_REQUIRED,
             });
@@ -209,18 +210,18 @@ const MessageQueryPage = () => {
         try {
             const resp = await remoteApi.resendMessageDirectly(msgIdToResend, consumerGroup, topicToResend);
             if (resp.status === 0) {
-                notification.success({
+                notificationApi.success({
                     message: t.SUCCESS,
                     description: t.RESEND_SUCCESS,
                 });
             } else {
-                notification.error({
+                notificationApi.error({
                     message: t.ERROR,
                     description: resp.errMsg || t.RESEND_FAILED,
                 });
             }
         } catch (error) {
-            notification.error({
+            notificationApi.error({
                 message: t.ERROR,
                 description: t.RESEND_FAILED,
             });
@@ -234,11 +235,12 @@ const MessageQueryPage = () => {
     };
 
     const topicColumns = [
-        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
+        {
+            title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
             render: (text) => <Text copyable>{text}</Text>
         },
-        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
-        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
+        {title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center'},
+        {title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center'},
         {
             title: 'StoreTime',
             dataIndex: 'storeTimestamp',
@@ -259,11 +261,12 @@ const MessageQueryPage = () => {
     ];
 
     const keyColumns = [
-        { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
+        {
+            title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center',
             render: (text) => <Text copyable>{text}</Text>
         },
-        { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
-        { title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
+        {title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center'},
+        {title: 'Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center'},
         {
             title: 'StoreTime',
             dataIndex: 'storeTimestamp',
@@ -284,168 +287,175 @@ const MessageQueryPage = () => {
     ];
 
     return (
-        <div style={{ padding: '20px' }}>
-            <Spin spinning={loading} tip={t.LOADING_DATA}>
-                <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
-                    <TabPane tab="Topic" key="topic">
-                        <h5 style={{ margin: '15px 0' }}>{t.TOTAL_MESSAGES}</h5>
-                        <div style={{ padding: '20px', minHeight: '600px' }}>
-                            <Form layout="inline" form={form} style={{ marginBottom: '20px' }}>
-                                <Form.Item label={t.TOPIC}>
-                                    <Select
-                                        showSearch
-                                        style={{ width: 300 }}
-                                        placeholder={t.SELECT_TOPIC_PLACEHOLDER}
-                                        value={selectedTopic}
-                                        onChange={(value) => {
-                                            setSelectedTopic(value);
-                                            onChangeQueryCondition();
-                                        }}
-                                        filterOption={(input, option) =>
-                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
-                                    >
-                                        {allTopicList.map(topic => (
-                                            <Option key={topic} value={topic}>{topic}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                                <Form.Item label={t.BEGIN}>
-                                    <DatePicker
-                                        showTime
-                                        format="YYYY-MM-DD HH:mm:ss"
-                                        value={timepickerBegin}
-                                        onChange={(date) => {
-                                            setTimepickerBegin(date);
-                                            onChangeQueryCondition();
-                                        }}
-                                    />
-                                </Form.Item>
-                                <Form.Item label={t.END}>
-                                    <DatePicker
-                                        showTime
-                                        format="YYYY-MM-DD HH:mm:ss"
-                                        value={timepickerEnd}
-                                        onChange={(date) => {
-                                            setTimepickerEnd(date);
-                                            onChangeQueryCondition();
-                                        }}
-                                    />
-                                </Form.Item>
-                                <Form.Item>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={() => queryMessagePageByTopic()}>
-                                        {t.SEARCH}
-                                    </Button>
-                                </Form.Item>
-                            </Form>
-                            <Table
-                                columns={topicColumns}
-                                dataSource={messageShowList}
-                                rowKey="msgId"
-                                bordered
-                                pagination={{
-                                    current: paginationConf.current,
-                                    pageSize: paginationConf.pageSize,
-                                    total: paginationConf.total,
-                                    onChange: (page, pageSize) => queryMessagePageByTopic(page, pageSize),
-                                }}
-                                locale={{ emptyText: t.NO_MATCH_RESULT }}
-                            />
-                        </div>
-                    </TabPane>
-                    <TabPane tab="Message Key" key="messageKey">
-                        <h5 style={{ margin: '15px 0' }}>{t.ONLY_RETURN_64_MESSAGES}</h5>
-                        <div style={{ padding: '20px', minHeight: '600px' }}>
-                            <Form layout="inline" style={{ marginBottom: '20px' }}>
-                                <Form.Item label="Topic:">
-                                    <Select
-                                        showSearch
-                                        style={{ width: 300 }}
-                                        placeholder={t.SELECT_TOPIC_PLACEHOLDER}
-                                        value={selectedTopic}
-                                        onChange={setSelectedTopic}
-                                        filterOption={(input, option) =>
-                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
-                                    >
-                                        {allTopicList.map(topic => (
-                                            <Option key={topic} value={topic}>{topic}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                                <Form.Item label="Key:">
-                                    <Input
-                                        style={{ width: 450 }}
-                                        value={key}
-                                        onChange={(e) => setKey(e.target.value)}
-                                    />
-                                </Form.Item>
-                                <Form.Item>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={queryMessageByTopicAndKey}>
-                                        {t.SEARCH}
-                                    </Button>
-                                </Form.Item>
-                            </Form>
-                            <Table
-                                columns={keyColumns}
-                                dataSource={queryMessageByTopicAndKeyResult}
-                                rowKey="msgId"
-                                bordered
-                                pagination={false}
-                                locale={{ emptyText: t.NO_MATCH_RESULT }}
-                            />
-                        </div>
-                    </TabPane>
-                    <TabPane tab="Message ID" key="messageId">
-                        <h5 style={{ margin: '15px 0' }}>
-                            {t.MESSAGE_ID_TOPIC_HINT}
-                        </h5>
-                        <div style={{ padding: '20px', minHeight: '600px' }}>
-                            <Form layout="inline" style={{ marginBottom: '20px' }}>
-                                <Form.Item label="Topic:">
-                                    <Select
-                                        showSearch
-                                        style={{ width: 300 }}
-                                        placeholder={t.SELECT_TOPIC_PLACEHOLDER}
-                                        value={selectedTopic}
-                                        onChange={setSelectedTopic}
-                                        filterOption={(input, option) =>
-                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
-                                    >
-                                        {allTopicList.map(topic => (
-                                            <Option key={topic} value={topic}>{topic}</Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                                <Form.Item label="MessageId:">
-                                    <Input
-                                        style={{ width: 450 }}
-                                        value={messageId}
-                                        onChange={(e) => setMessageId(e.target.value)}
-                                    />
-                                </Form.Item>
-                                <Form.Item>
-                                    <Button type="primary" icon={<SearchOutlined />} onClick={() => showMessageDetail(messageId, selectedTopic)}>
-                                        {t.SEARCH}
-                                    </Button>
-                                </Form.Item>
-                            </Form>
-                            {/* Message ID 查询结果通常直接弹窗显示，这里不需要表格 */}
-                        </div>
-                    </TabPane>
-                </Tabs>
-            </Spin>
+        <>
+            {notificationContextHolder}
+            <div style={{padding: '20px'}}>
+                <Spin spinning={loading} tip={t.LOADING_DATA}>
+                    <Tabs activeKey={activeTab} onChange={setActiveTab} centered>
+                        <TabPane tab="Topic" key="topic">
+                            <h5 style={{margin: '15px 0'}}>{t.TOTAL_MESSAGES}</h5>
+                            <div style={{padding: '20px', minHeight: '600px'}}>
+                                <Form layout="inline" form={form} style={{marginBottom: '20px'}}>
+                                    <Form.Item label={t.TOPIC}>
+                                        <Select
+                                            showSearch
+                                            style={{width: 300}}
+                                            placeholder={t.SELECT_TOPIC_PLACEHOLDER}
+                                            value={selectedTopic}
+                                            onChange={(value) => {
+                                                setSelectedTopic(value);
+                                                onChangeQueryCondition();
+                                            }}
+                                            filterOption={(input, option) =>
+                                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                            }
+                                        >
+                                            {allTopicList.map(topic => (
+                                                <Option key={topic} value={topic}>{topic}</Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                    <Form.Item label={t.BEGIN}>
+                                        <DatePicker
+                                            showTime
+                                            format="YYYY-MM-DD HH:mm:ss"
+                                            value={timepickerBegin}
+                                            onChange={(date) => {
+                                                setTimepickerBegin(date);
+                                                onChangeQueryCondition();
+                                            }}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item label={t.END}>
+                                        <DatePicker
+                                            showTime
+                                            format="YYYY-MM-DD HH:mm:ss"
+                                            value={timepickerEnd}
+                                            onChange={(date) => {
+                                                setTimepickerEnd(date);
+                                                onChangeQueryCondition();
+                                            }}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Button type="primary" icon={<SearchOutlined/>}
+                                                onClick={() => queryMessagePageByTopic()}>
+                                            {t.SEARCH}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                                <Table
+                                    columns={topicColumns}
+                                    dataSource={messageShowList}
+                                    rowKey="msgId"
+                                    bordered
+                                    pagination={{
+                                        current: paginationConf.current,
+                                        pageSize: paginationConf.pageSize,
+                                        total: paginationConf.total,
+                                        onChange: (page, pageSize) => queryMessagePageByTopic(page, pageSize),
+                                    }}
+                                    locale={{emptyText: t.NO_MATCH_RESULT}}
+                                />
+                            </div>
+                        </TabPane>
+                        <TabPane tab="Message Key" key="messageKey">
+                            <h5 style={{margin: '15px 0'}}>{t.ONLY_RETURN_64_MESSAGES}</h5>
+                            <div style={{padding: '20px', minHeight: '600px'}}>
+                                <Form layout="inline" style={{marginBottom: '20px'}}>
+                                    <Form.Item label="Topic:">
+                                        <Select
+                                            showSearch
+                                            style={{width: 300}}
+                                            placeholder={t.SELECT_TOPIC_PLACEHOLDER}
+                                            value={selectedTopic}
+                                            onChange={setSelectedTopic}
+                                            filterOption={(input, option) =>
+                                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                            }
+                                        >
+                                            {allTopicList.map(topic => (
+                                                <Option key={topic} value={topic}>{topic}</Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                    <Form.Item label="Key:">
+                                        <Input
+                                            style={{width: 450}}
+                                            value={key}
+                                            onChange={(e) => setKey(e.target.value)}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Button type="primary" icon={<SearchOutlined/>}
+                                                onClick={queryMessageByTopicAndKey}>
+                                            {t.SEARCH}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                                <Table
+                                    columns={keyColumns}
+                                    dataSource={queryMessageByTopicAndKeyResult}
+                                    rowKey="msgId"
+                                    bordered
+                                    pagination={false}
+                                    locale={{emptyText: t.NO_MATCH_RESULT}}
+                                />
+                            </div>
+                        </TabPane>
+                        <TabPane tab="Message ID" key="messageId">
+                            <h5 style={{margin: '15px 0'}}>
+                                {t.MESSAGE_ID_TOPIC_HINT}
+                            </h5>
+                            <div style={{padding: '20px', minHeight: '600px'}}>
+                                <Form layout="inline" style={{marginBottom: '20px'}}>
+                                    <Form.Item label="Topic:">
+                                        <Select
+                                            showSearch
+                                            style={{width: 300}}
+                                            placeholder={t.SELECT_TOPIC_PLACEHOLDER}
+                                            value={selectedTopic}
+                                            onChange={setSelectedTopic}
+                                            filterOption={(input, option) =>
+                                                option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                            }
+                                        >
+                                            {allTopicList.map(topic => (
+                                                <Option key={topic} value={topic}>{topic}</Option>
+                                            ))}
+                                        </Select>
+                                    </Form.Item>
+                                    <Form.Item label="MessageId:">
+                                        <Input
+                                            style={{width: 450}}
+                                            value={messageId}
+                                            onChange={(e) => setMessageId(e.target.value)}
+                                        />
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Button type="primary" icon={<SearchOutlined/>}
+                                                onClick={() => showMessageDetail(messageId, selectedTopic)}>
+                                            {t.SEARCH}
+                                        </Button>
+                                    </Form.Item>
+                                </Form>
+                                {/* Message ID 查询结果通常直接弹窗显示，这里不需要表格 */}
+                            </div>
+                        </TabPane>
+                    </Tabs>
+                </Spin>
 
-            {/* Message Detail Dialog Component */}
-            <MessageDetailViewDialog
-                visible={isMessageDetailModalVisible}
-                onCancel={handleCloseMessageDetailModal}
-                messageId={currentMessageIdForDetail}
-                topic={currentTopicForDetail}
-                onResendMessage={handleResendMessage} // Pass the resend function
-            />
-        </div>
+                {/* Message Detail Dialog Component */}
+                <MessageDetailViewDialog
+                    visible={isMessageDetailModalVisible}
+                    onCancel={handleCloseMessageDetailModal}
+                    messageId={currentMessageIdForDetail}
+                    topic={currentTopicForDetail}
+                    onResendMessage={handleResendMessage} // Pass the resend function
+                />
+            </div>
+        </>
+
     );
 };
 

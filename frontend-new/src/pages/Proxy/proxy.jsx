@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react'; // 引入 useCallback
-import { Modal, Button, Select, Input, Card, Space, Row, Col, notification, Spin } from 'antd'; // 引入 Spin 和 notification
+import React, { useState, useEffect } from 'react'; // 引入 useCallback
+import { Modal, Button, Select, Input, Card, Row, Col, notification, Spin } from 'antd'; // 引入 Spin 和 notification
 import { useLanguage } from '../../i18n/LanguageContext';
 import { remoteApi } from "../../api/remoteApi/remoteApi"; // 确保路径正确
 
-// 移除 'antd/dist/reset.css'; 因为通常在入口文件引入一次即可
 
 const { Option } = Select;
 
@@ -18,7 +17,7 @@ const ProxyManager = () => {
 
     const [showModal, setShowModal] = useState(false); // 控制 Modal 弹窗显示
     const [writeOperationEnabled, setWriteOperationEnabled] = useState(true); // 写操作权限，默认 true
-
+    const [notificationApi, notificationContextHolder] = notification.useNotification();
     // 模拟 Angular 的 $window.sessionStorage.getItem("userrole")
     // 在 React 中，通常在组件挂载时获取一次
     useEffect(() => {
@@ -46,7 +45,7 @@ const ProxyManager = () => {
                 }
 
             } else {
-                notification.error({ message: resp.errMsg || t.FETCH_PROXY_LIST_FAILED, duration: 2 });
+                notificationApi.error({ message: resp.errMsg || t.FETCH_PROXY_LIST_FAILED, duration: 2 });
             }
         });
     }, [t]); // t 依赖，确保语言切换时effect不重新运行，但首次加载时确保语言上下文已就绪
@@ -61,7 +60,7 @@ const ProxyManager = () => {
     // "添加" 按钮点击事件
     const handleAddProxyAddr = () => {
         if (!newProxyAddr.trim()) {
-            notification.warning({ message: t.INPUT_PROXY_ADDR_REQUIRED || "Please input a new proxy address.", duration: 2 });
+            notificationApi.warning({ message: t.INPUT_PROXY_ADDR_REQUIRED || "Please input a new proxy address.", duration: 2 });
             return;
         }
         setLoading(true);
@@ -73,9 +72,9 @@ const ProxyManager = () => {
                     setProxyAddrList(prevList => [...prevList, newProxyAddr.trim()]);
                 }
                 setNewProxyAddr(''); // 清空输入框
-                notification.info({ message: t.SUCCESS || "SUCCESS", duration: 2 });
+                notificationApi.info({ message: t.SUCCESS || "SUCCESS", duration: 2 });
             } else {
-                notification.error({ message: resp.errMsg || t.ADD_PROXY_FAILED, duration: 2 });
+                notificationApi.error({ message: resp.errMsg || t.ADD_PROXY_FAILED, duration: 2 });
             }
         });
     };

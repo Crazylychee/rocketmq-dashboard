@@ -1,17 +1,8 @@
 // DeployHistoryList.js
-import React, { useState, useEffect } from 'react';
-import {
-    Button,
-    Table,
-    Space,
-    Checkbox,
-    Input,
-    Form,
-    message,
-    Popconfirm
-} from 'antd';
-import { useLanguage } from '../../i18n/LanguageContext';
-import { remoteApi } from '../../api/remoteApi/remoteApi';
+import React, {useEffect, useState} from 'react';
+import {Button, Checkbox, Form, Input, message, Popconfirm, Space, Table} from 'antd';
+import {useLanguage} from '../../i18n/LanguageContext';
+import {remoteApi} from '../../api/remoteApi/remoteApi';
 import ResetOffsetResultDialog from "../../components/topic/ResetOffsetResultDialog";
 import SendResultDialog from "../../components/topic/SendResultDialog";
 import TopicModifyDialog from "../../components/topic/TopicModifyDialog";
@@ -24,7 +15,7 @@ import SendTopicMessageDialog from "../../components/topic/SendTopicMessageDialo
 
 
 const DeployHistoryList = () => {
-    const { t } = useLanguage();
+    const {t} = useLanguage();
     const [filterStr, setFilterStr] = useState('');
     const [filterNormal, setFilterNormal] = useState(true);
     const [filterDelay, setFilterDelay] = useState(false);
@@ -76,7 +67,7 @@ const DeployHistoryList = () => {
     // Mock data for dropdowns in topicModifyDialog
     const [allClusterNameList, setAllClusterNameList] = useState([]);
     const [allBrokerNameList, setAllBrokerNameList] = useState([]);
-
+    const [messageApi, msgContextHolder] = message.useMessage();
     // Pagination config
     const [paginationConf, setPaginationConf] = useState({
         current: 1,
@@ -141,7 +132,7 @@ const DeployHistoryList = () => {
 
     const closeSendTopicMessageDialog = () => {
         setIsSendTopicMessageModalVisible(false);
-        setSendTopicMessageData({ topic: '', tag: '', key: '', messageBody: '', traceEnabled: false });
+        setSendTopicMessageData({topic: '', tag: '', key: '', messageBody: '', traceEnabled: false});
     };
 
     const getTopicList = async () => {
@@ -156,11 +147,11 @@ const DeployHistoryList = () => {
                     total: result.data.topicNameList.length
                 }));
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching topic list:", error);
-            message.error("Failed to fetch topic list");
+            messageApi.error("Failed to fetch topic list");
         } finally {
             setLoading(false);
         }
@@ -177,13 +168,13 @@ const DeployHistoryList = () => {
                     ...prev,
                     total: result.data.topicNameList.length
                 }));
-                message.success(t.REFRESHING_TOPIC_LIST);
+                messageApi.success(t.REFRESHING_TOPIC_LIST);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error refreshing topic list:", error);
-            message.error("Failed to refresh topic list");
+            messageApi.error("Failed to refresh topic list");
         } finally {
             setLoading(false);
         }
@@ -251,7 +242,7 @@ const DeployHistoryList = () => {
                         perm: configResult.data[0].perm || 7,
                     });
                 } else {
-                    message.error(configResult.errMsg);
+                    messageApi.error(configResult.errMsg);
                     return;
                 }
             } else { // 新增逻辑 (topic 是 undefined, null, 空字符串或者对象)
@@ -267,14 +258,14 @@ const DeployHistoryList = () => {
             }
         } catch (error) {
             console.error("Error opening add/update dialog:", error);
-            message.error("Failed to open dialog");
+            messageApi.error("Failed to open dialog");
         }
         const clusterResult = await remoteApi.getClusterList();
         if (clusterResult.status === 0) {
             setAllClusterNameList(Object.keys(clusterResult.data.clusterInfo.clusterAddrTable));
             setAllBrokerNameList(Object.keys(clusterResult.data.brokerServer));
         } else {
-            message.error(clusterResult.errMsg);
+            messageApi.error(clusterResult.errMsg);
         }
         setIsAddUpdateTopicModalVisible(true);
     };
@@ -284,15 +275,15 @@ const DeployHistoryList = () => {
         try {
             const result = await remoteApi.createOrUpdateTopic(values);
             if (result.status === 0) {
-                message.success(t.TOPIC_OPERATION_SUCCESS);
+                messageApi.success(t.TOPIC_OPERATION_SUCCESS);
                 closeAddUpdateDialog();
                 refreshTopicList();
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error creating/updating topic:", error);
-            message.error("Failed to create/update topic");
+            messageApi.error("Failed to create/update topic");
         }
     };
 
@@ -301,15 +292,15 @@ const DeployHistoryList = () => {
         try {
             const result = await remoteApi.deleteTopic(topicToDelete);
             if (result.status === 0) {
-                message.success(`${t.TOPIC} [${topicToDelete}] ${t.DELETED_SUCCESSFULLY}`);
+                messageApi.success(`${t.TOPIC} [${topicToDelete}] ${t.DELETED_SUCCESSFULLY}`);
                 setAllTopicList(allTopicList.filter(topic => topic !== topicToDelete));
                 await refreshTopicList()
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error deleting topic:", error);
-            message.error("Failed to delete topic");
+            messageApi.error("Failed to delete topic");
         }
     };
 
@@ -322,11 +313,11 @@ const DeployHistoryList = () => {
                 setStatsData(result.data);
                 setIsStatsViewModalVisible(true);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching stats:", error);
-            message.error("Failed to fetch stats");
+            messageApi.error("Failed to fetch stats");
         }
     };
 
@@ -339,11 +330,11 @@ const DeployHistoryList = () => {
                 setRouteData(result.data);
                 setIsRouterViewModalVisible(true);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching route:", error);
-            message.error("Failed to fetch route");
+            messageApi.error("Failed to fetch route");
         }
     };
 
@@ -357,11 +348,11 @@ const DeployHistoryList = () => {
                 setAllConsumerGroupList(Object.keys(result.data));
                 setIsConsumerViewModalVisible(true);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching consumers:", error);
-            message.error("Failed to fetch consumers");
+            messageApi.error("Failed to fetch consumers");
         }
     };
 
@@ -372,17 +363,17 @@ const DeployHistoryList = () => {
             const result = await remoteApi.getTopicConsumerGroups(topic);
             if (result.status === 0) {
                 if (!result.data.groupList) {
-                    message.error("No consumer groups found");
+                    messageApi.error("No consumer groups found");
                     return;
                 }
                 setAllConsumerGroupList(result.data.groupList);
                 setIsConsumerResetOffsetModalVisible(true);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching consumer groups:", error);
-            message.error("Failed to fetch consumer groups");
+            messageApi.error("Failed to fetch consumer groups");
         }
     };
 
@@ -393,29 +384,29 @@ const DeployHistoryList = () => {
             const result = await remoteApi.getTopicConsumerGroups(topic);
             if (result.status === 0) {
                 if (!result.data.groupList) {
-                    message.error("No consumer groups found");
+                    messageApi.error("No consumer groups found");
                     return;
                 }
                 setAllConsumerGroupList(result.data.groupList);
                 setIsSkipMessageAccumulateModalVisible(true);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error fetching consumer groups:", error);
-            message.error("Failed to fetch consumer groups");
+            messageApi.error("Failed to fetch consumer groups");
         }
     };
 
     // Open Send Topic Message Dialog
     const openSendTopicMessageDialog = (topic) => {
         setCurrentTopicForDialogs(topic);
-        setSendTopicMessageData(prev => ({ ...prev, topic }));
+        setSendTopicMessageData(prev => ({...prev, topic}));
         setIsSendTopicMessageModalVisible(true);
     };
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setSendTopicMessageData(prevData => ({
             ...prevData,
             [name]: value,
@@ -438,11 +429,11 @@ const DeployHistoryList = () => {
                 setIsResetOffsetResultModalVisible(true);
                 setIsConsumerResetOffsetModalVisible(false);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error resetting offset:", error);
-            message.error("Failed to reset offset");
+            messageApi.error("Failed to reset offset");
         }
     };
 
@@ -459,11 +450,11 @@ const DeployHistoryList = () => {
                 setIsResetOffsetResultModalVisible(true); // 注意这里使用了 setIsResetOffsetResultModalVisible，确认这是你期望的
                 setIsSkipMessageAccumulateModalVisible(false);
             } else {
-                message.error(result.errMsg);
+                messageApi.error(result.errMsg);
             }
         } catch (error) {
             console.error("Error skipping message accumulate:", error);
-            message.error("Failed to skip message accumulate");
+            messageApi.error("Failed to skip message accumulate");
         }
     };
 
@@ -476,7 +467,7 @@ const DeployHistoryList = () => {
             render: (text) => {
                 const sysFlag = text.startsWith('%SYS%');
                 const topic = sysFlag ? text.substring(5) : text;
-                return <span style={{ color: sysFlag ? 'red' : '' }}>{topic}</span>;
+                return <span style={{color: sysFlag ? 'red' : ''}}>{topic}</span>;
             },
         },
         {
@@ -506,12 +497,14 @@ const DeployHistoryList = () => {
                             </Button>
                         )}
                         {!sysFlag && writeOperationEnabled && (
-                            <Button type="primary" danger size="small" onClick={() => openConsumerResetOffsetDialog(topicName)}>
+                            <Button type="primary" danger size="small"
+                                    onClick={() => openConsumerResetOffsetDialog(topicName)}>
                                 {t.RESET_CUS_OFFSET}
                             </Button>
                         )}
                         {!sysFlag && writeOperationEnabled && (
-                            <Button type="primary" danger size="small" onClick={() => openSkipMessageAccumulateDialog(topicName)}>
+                            <Button type="primary" danger size="small"
+                                    onClick={() => openSkipMessageAccumulateDialog(topicName)}>
                                 {t.SKIP_MESSAGE_ACCUMULATE}
                             </Button>
                         )}
@@ -534,171 +527,179 @@ const DeployHistoryList = () => {
     ];
 
     return (
-        <div className="container-fluid" id="deployHistoryList">
-            <div className="modal-body">
-                <div className="row">
-                    <Form layout="inline" className="pull-left col-sm-12">
-                        <Form.Item label={t.TOPIC}>
-                            <Input
-                                value={filterStr}
-                                onChange={(e) => setFilterStr(e.target.value)}
-                            />
-                        </Form.Item>
-                        <Form.Item>
-                            <Checkbox checked={filterNormal} onChange={(e) => setFilterNormal(e.target.checked)}>
-                                {t.NORMAL}
-                            </Checkbox>
-                        </Form.Item>
-                        {rmqVersion && (
-                            <>
-                                <Form.Item>
-                                    <Checkbox checked={filterDelay} onChange={(e) => setFilterDelay(e.target.checked)}>
-                                        {t.DELAY}
-                                    </Checkbox>
-                                </Form.Item>
-                                <Form.Item>
-                                    <Checkbox checked={filterFifo} onChange={(e) => setFilterFifo(e.target.checked)}>
-                                        {t.FIFO}
-                                    </Checkbox>
-                                </Form.Item>
-                                <Form.Item>
-                                    <Checkbox checked={filterTransaction} onChange={(e) => setFilterTransaction(e.target.checked)}>
-                                        {t.TRANSACTION}
-                                    </Checkbox>
-                                </Form.Item>
-                                <Form.Item>
-                                    <Checkbox checked={filterUnspecified} onChange={(e) => setFilterUnspecified(e.target.checked)}>
-                                        {t.UNSPECIFIED}
-                                    </Checkbox>
-                                </Form.Item>
-                            </>
-                        )}
-                        <Form.Item>
-                            <Checkbox checked={filterRetry} onChange={(e) => setFilterRetry(e.target.checked)}>
-                                {t.RETRY}
-                            </Checkbox>
-                        </Form.Item>
-                        <Form.Item>
-                            <Checkbox checked={filterDLQ} onChange={(e) => setFilterDLQ(e.target.checked)}>
-                                {t.DLQ}
-                            </Checkbox>
-                        </Form.Item>
-                        <Form.Item>
-                            <Checkbox checked={filterSystem} onChange={(e) => setFilterSystem(e.target.checked)}>
-                                {t.SYSTEM}
-                            </Checkbox>
-                        </Form.Item>
-                        {writeOperationEnabled && (
+        <>
+            {msgContextHolder}
+            <div className="container-fluid" id="deployHistoryList">
+                <div className="modal-body">
+                    <div className="row">
+                        <Form layout="inline" className="pull-left col-sm-12">
+                            <Form.Item label={t.TOPIC}>
+                                <Input
+                                    value={filterStr}
+                                    onChange={(e) => setFilterStr(e.target.value)}
+                                />
+                            </Form.Item>
                             <Form.Item>
-                                <Button type="primary" onClick={openAddUpdateDialog}>
-                                    {t.ADD} / {t.UPDATE}
+                                <Checkbox checked={filterNormal} onChange={(e) => setFilterNormal(e.target.checked)}>
+                                    {t.NORMAL}
+                                </Checkbox>
+                            </Form.Item>
+                            {rmqVersion && (
+                                <>
+                                    <Form.Item>
+                                        <Checkbox checked={filterDelay}
+                                                  onChange={(e) => setFilterDelay(e.target.checked)}>
+                                            {t.DELAY}
+                                        </Checkbox>
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Checkbox checked={filterFifo}
+                                                  onChange={(e) => setFilterFifo(e.target.checked)}>
+                                            {t.FIFO}
+                                        </Checkbox>
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Checkbox checked={filterTransaction}
+                                                  onChange={(e) => setFilterTransaction(e.target.checked)}>
+                                            {t.TRANSACTION}
+                                        </Checkbox>
+                                    </Form.Item>
+                                    <Form.Item>
+                                        <Checkbox checked={filterUnspecified}
+                                                  onChange={(e) => setFilterUnspecified(e.target.checked)}>
+                                            {t.UNSPECIFIED}
+                                        </Checkbox>
+                                    </Form.Item>
+                                </>
+                            )}
+                            <Form.Item>
+                                <Checkbox checked={filterRetry} onChange={(e) => setFilterRetry(e.target.checked)}>
+                                    {t.RETRY}
+                                </Checkbox>
+                            </Form.Item>
+                            <Form.Item>
+                                <Checkbox checked={filterDLQ} onChange={(e) => setFilterDLQ(e.target.checked)}>
+                                    {t.DLQ}
+                                </Checkbox>
+                            </Form.Item>
+                            <Form.Item>
+                                <Checkbox checked={filterSystem} onChange={(e) => setFilterSystem(e.target.checked)}>
+                                    {t.SYSTEM}
+                                </Checkbox>
+                            </Form.Item>
+                            {writeOperationEnabled && (
+                                <Form.Item>
+                                    <Button type="primary" onClick={openAddUpdateDialog}>
+                                        {t.ADD} / {t.UPDATE}
+                                    </Button>
+                                </Form.Item>
+                            )}
+                            <Form.Item>
+                                <Button type="primary" onClick={refreshTopicList}>
+                                    {t.REFRESH}
                                 </Button>
                             </Form.Item>
-                        )}
-                        <Form.Item>
-                            <Button type="primary" onClick={refreshTopicList}>
-                                {t.REFRESH}
-                            </Button>
-                        </Form.Item>
-                    </Form>
-                </div>
-                <br />
-                <div>
-                    <div className="row">
-                        <Table
-                            bordered
-                            loading={loading}
-                            dataSource={topicShowList.map((topic, index) => ({ key: index, topic }))}
-                            columns={columns}
-                            pagination={paginationConf}
-                            onChange={handleTableChange}
-                        />
+                        </Form>
+                    </div>
+                    <br/>
+                    <div>
+                        <div className="row">
+                            <Table
+                                bordered
+                                loading={loading}
+                                dataSource={topicShowList.map((topic, index) => ({key: index, topic}))}
+                                columns={columns}
+                                pagination={paginationConf}
+                                onChange={handleTableChange}
+                            />
+                        </div>
                     </div>
                 </div>
+
+                {/* Modals/Dialogs - 传递 visible 和 onClose prop */}
+                <ResetOffsetResultDialog
+                    visible={isResetOffsetResultModalVisible}
+                    onClose={closeResetOffsetResultDialog} // 传递关闭函数
+                    result={resetOffsetResultData}
+                    t={t}
+                />
+
+                <SendResultDialog
+                    visible={isSendResultModalVisible}
+                    onClose={closeSendResultDialog} // 传递关闭函数
+                    result={sendResultData}
+                    t={t}
+                />
+
+                <TopicModifyDialog
+                    visible={isAddUpdateTopicModalVisible}
+                    onClose={closeAddUpdateDialog} // 传递关闭函数
+                    initialData={topicModifyData}
+                    bIsUpdate={isUpdateMode}
+                    writeOperationEnabled={writeOperationEnabled}
+                    allClusterNameList={allClusterNameList || []}
+                    allBrokerNameList={allBrokerNameList || []}
+                    onSubmit={postTopicRequest}
+                    onInputChange={handleInputChange}
+                    t={t}
+                />
+
+                <ConsumerViewDialog
+                    visible={isConsumerViewModalVisible}
+                    onClose={closeConsumerViewDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    consumerData={consumerData}
+                    consumerGroupCount={allConsumerGroupList.length}
+                    t={t}
+                />
+
+                <ConsumerResetOffsetDialog
+                    visible={isConsumerResetOffsetModalVisible}
+                    onClose={closeConsumerResetOffsetDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    allConsumerGroupList={allConsumerGroupList}
+                    handleResetOffset={handleResetOffset}
+                    t={t}
+                />
+
+                <SkipMessageAccumulateDialog
+                    visible={isSkipMessageAccumulateModalVisible}
+                    onClose={closeSkipMessageAccumulateDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    allConsumerGroupList={allConsumerGroupList}
+                    handleSkipMessageAccumulate={handleSkipMessageAccumulate}
+                    t={t}
+                />
+
+                <StatsViewDialog
+                    visible={isStatsViewModalVisible}
+                    onClose={closeStatsViewDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    statsData={statsData}
+                    t={t}
+                />
+
+                <RouterViewDialog
+                    visible={isRouterViewModalVisible}
+                    onClose={closeRouterViewDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    routeData={routeData}
+                    t={t}
+                />
+
+                <SendTopicMessageDialog
+                    visible={isSendTopicMessageModalVisible}
+                    onClose={closeSendTopicMessageDialog} // 传递关闭函数
+                    topic={currentTopicForDialogs}
+                    setSendResultData={setSendResultData}
+                    setIsSendResultModalVisible={setIsSendResultModalVisible}
+                    setIsSendTopicMessageModalVisible={setIsSendTopicMessageModalVisible}
+                    sendTopicMessageData={sendTopicMessageData}
+                    t={t}
+                />
             </div>
+        </>
 
-            {/* Modals/Dialogs - 传递 visible 和 onClose prop */}
-            <ResetOffsetResultDialog
-                visible={isResetOffsetResultModalVisible}
-                onClose={closeResetOffsetResultDialog} // 传递关闭函数
-                result={resetOffsetResultData}
-                t={t}
-            />
-
-            <SendResultDialog
-                visible={isSendResultModalVisible}
-                onClose={closeSendResultDialog} // 传递关闭函数
-                result={sendResultData}
-                t={t}
-            />
-
-            <TopicModifyDialog
-                visible={isAddUpdateTopicModalVisible}
-                onClose={closeAddUpdateDialog} // 传递关闭函数
-                initialData={topicModifyData}
-                bIsUpdate={isUpdateMode}
-                writeOperationEnabled={writeOperationEnabled}
-                allClusterNameList={allClusterNameList || []}
-                allBrokerNameList={allBrokerNameList || []}
-                onSubmit={postTopicRequest}
-                onInputChange={handleInputChange}
-                t={t}
-            />
-
-            <ConsumerViewDialog
-                visible={isConsumerViewModalVisible}
-                onClose={closeConsumerViewDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                consumerData={consumerData}
-                consumerGroupCount={allConsumerGroupList.length}
-                t={t}
-            />
-
-            <ConsumerResetOffsetDialog
-                visible={isConsumerResetOffsetModalVisible}
-                onClose={closeConsumerResetOffsetDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                allConsumerGroupList={allConsumerGroupList}
-                handleResetOffset={handleResetOffset}
-                t={t}
-            />
-
-            <SkipMessageAccumulateDialog
-                visible={isSkipMessageAccumulateModalVisible}
-                onClose={closeSkipMessageAccumulateDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                allConsumerGroupList={allConsumerGroupList}
-                handleSkipMessageAccumulate={handleSkipMessageAccumulate}
-                t={t}
-            />
-
-            <StatsViewDialog
-                visible={isStatsViewModalVisible}
-                onClose={closeStatsViewDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                statsData={statsData}
-                t={t}
-            />
-
-            <RouterViewDialog
-                visible={isRouterViewModalVisible}
-                onClose={closeRouterViewDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                routeData={routeData}
-                t={t}
-            />
-
-            <SendTopicMessageDialog
-                visible={isSendTopicMessageModalVisible}
-                onClose={closeSendTopicMessageDialog} // 传递关闭函数
-                topic={currentTopicForDialogs}
-                setSendResultData={setSendResultData}
-                setIsSendResultModalVisible={setIsSendResultModalVisible}
-                setIsSendTopicMessageModalVisible={setIsSendTopicMessageModalVisible}
-                sendTopicMessageData={sendTopicMessageData}
-                t={t}
-            />
-        </div>
     );
 };
 

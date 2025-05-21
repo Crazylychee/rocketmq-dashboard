@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Button, Modal, Select, notification, Spin } from 'antd';
-import { useLanguage } from "../../i18n/LanguageContext";
+import React, {useCallback, useEffect, useState} from 'react';
+import {Button, Modal, notification, Select, Spin, Table} from 'antd';
+import {useLanguage} from "../../i18n/LanguageContext";
 import {remoteApi, tools} from "../../api/remoteApi/remoteApi"; // 确保路径正确
 
-const { Option } = Select;
+const {Option} = Select;
 
 const Cluster = () => {
-    const { t } = useLanguage();
+    const {t} = useLanguage();
 
     const [loading, setLoading] = useState(false);
     const [clusterNames, setClusterNames] = useState([]);
@@ -21,6 +21,7 @@ const Cluster = () => {
     const [currentBrokerName, setCurrentBrokerName] = useState('');
     const [currentIndex, setCurrentIndex] = useState(null); // 对应 brokerId
     const [currentBrokerAddress, setCurrentBrokerAddress] = useState('');
+    const [api, contextHolder] = notification.useNotification();
 
     const switchCluster = useCallback((clusterName) => {
         if (allBrokersData[clusterName]) {
@@ -40,8 +41,8 @@ const Cluster = () => {
         remoteApi.queryClusterList((resp) => {
             setLoading(false);
             if (resp.status === 0) {
-                const { clusterInfo, brokerServer } = resp.data;
-                const { clusterAddrTable, brokerAddrTable } = clusterInfo;
+                const {clusterInfo, brokerServer} = resp.data;
+                const {clusterAddrTable, brokerAddrTable} = clusterInfo;
 
                 const generatedBrokers = tools.generateBrokerMap(brokerServer, clusterAddrTable, brokerAddrTable);
                 setAllBrokersData(generatedBrokers);
@@ -60,7 +61,7 @@ const Cluster = () => {
                 }
 
             } else {
-                notification.error({ message: resp.errMsg || t.QUERY_CLUSTER_LIST_FAILED, duration: 2 });
+                api.error({message: resp.errMsg || t.QUERY_CLUSTER_LIST_FAILED, duration: 2});
             }
         });
     }, []);
@@ -86,11 +87,11 @@ const Cluster = () => {
                     setCurrentConfig(resp.data);
                     setConfigModalVisible(true);
                 } else {
-                    notification.error({ message: t.INVALID_CONFIG_DATA || 'Invalid config data received', duration: 2 });
+                    api.error({message: t.INVALID_CONFIG_DATA || 'Invalid config data received', duration: 2});
                     setCurrentConfig({}); // 清空配置，避免显示错误
                 }
             } else {
-                notification.error({ message: resp.errMsg || t.QUERY_BROKER_CONFIG_FAILED, duration: 2 });
+                api.error({message: resp.errMsg || t.QUERY_BROKER_CONFIG_FAILED, duration: 2});
             }
         });
     };
@@ -188,11 +189,14 @@ const Cluster = () => {
             align: 'center',
             render: (_, record) => (
                 <>
-                    <Button size="small" type="primary" onClick={() => showDetail(record.brokerName, record.brokerId, record)} style={{ marginRight: 8 }}>
+                    <Button size="small" type="primary"
+                            onClick={() => showDetail(record.brokerName, record.brokerId, record)}
+                            style={{marginRight: 8}}>
                         {t.STATUS}
                     </Button>
                     {/* 传入 record.address */}
-                    <Button size="small" type="primary" onClick={() => showConfig(record.address, record.brokerName, record.brokerId)}>
+                    <Button size="small" type="primary"
+                            onClick={() => showConfig(record.address, record.brokerName, record.brokerId)}>
                         {t.CONFIG}
                     </Button>
                 </>
@@ -201,77 +205,81 @@ const Cluster = () => {
     ];
 
     return (
-        <Spin spinning={loading} tip={t.LOADING}>
-            <div style={{ padding: 24 }}>
-                <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center' }}>
-                    <label style={{ marginRight: 8 }}>{t.CLUSTER}:</label>
-                    <Select
-                        style={{ width: 300 }}
-                        placeholder={t.SELECT_CLUSTER || "Please select a cluster"}
-                        value={selectedCluster}
-                        onChange={handleChangeCluster}
-                        allowClear
+        <>
+            {contextHolder}
+            <Spin spinning={loading} tip={t.LOADING}>
+                <div style={{padding: 24}}>
+                    <div style={{marginBottom: 16, display: 'flex', alignItems: 'center'}}>
+                        <label style={{marginRight: 8}}>{t.CLUSTER}:</label>
+                        <Select
+                            style={{width: 300}}
+                            placeholder={t.SELECT_CLUSTER || "Please select a cluster"}
+                            value={selectedCluster}
+                            onChange={handleChangeCluster}
+                            allowClear
+                        >
+                            {clusterNames.map((name) => (
+                                <Option key={name} value={name}>
+                                    {name}
+                                </Option>
+                            ))}
+                        </Select>
+                    </div>
+
+                    <Table
+                        dataSource={instances}
+                        columns={columns}
+                        rowKey={(record) => `${record.brokerName}-${record.brokerId}`}
+                        pagination={false}
+                        bordered
+                        size="middle"
+                    />
+
+                    <Modal
+                        title={`${t.BROKER} [${currentBrokerName}][${currentIndex}]`}
+                        open={detailModalVisible}
+                        footer={null}
+                        onCancel={() => setDetailModalVisible(false)}
+                        width={800}
+                        bodyStyle={{maxHeight: '60vh', overflowY: 'auto'}}
                     >
-                        {clusterNames.map((name) => (
-                            <Option key={name} value={name}>
-                                {name}
-                            </Option>
-                        ))}
-                    </Select>
+                        <Table
+                            dataSource={Object.entries(currentDetail).map(([key, value]) => ({key, value}))}
+                            columns={[
+                                {title: t.KEY || 'Key', dataIndex: 'key', key: 'key'},
+                                {title: t.VALUE || 'Value', dataIndex: 'value', key: 'value'},
+                            ]}
+                            pagination={false}
+                            size="small"
+                            bordered
+                            rowKey="key"
+                        />
+                    </Modal>
+
+                    <Modal
+                        title={`${t.BROKER} [${currentBrokerName}][${currentIndex}]`}
+                        open={configModalVisible}
+                        footer={null}
+                        onCancel={() => setConfigModalVisible(false)}
+                        width={800}
+                        bodyStyle={{maxHeight: '60vh', overflowY: 'auto'}}
+                    >
+                        <Table
+                            dataSource={Object.entries(currentConfig).map(([key, value]) => ({key, value}))}
+                            columns={[
+                                {title: t.KEY || 'Key', dataIndex: 'key', key: 'key'},
+                                {title: t.VALUE || 'Value', dataIndex: 'value', key: 'value'},
+                            ]}
+                            pagination={false}
+                            size="small"
+                            bordered
+                            rowKey="key"
+                        />
+                    </Modal>
                 </div>
+            </Spin>
+        </>
 
-                <Table
-                    dataSource={instances}
-                    columns={columns}
-                    rowKey={(record) => `${record.brokerName}-${record.brokerId}`}
-                    pagination={false}
-                    bordered
-                    size="middle"
-                />
-
-                <Modal
-                    title={`${t.BROKER} [${currentBrokerName}][${currentIndex}]`}
-                    open={detailModalVisible}
-                    footer={null}
-                    onCancel={() => setDetailModalVisible(false)}
-                    width={800}
-                    bodyStyle={{ maxHeight: '60vh', overflowY: 'auto' }}
-                >
-                    <Table
-                        dataSource={Object.entries(currentDetail).map(([key, value]) => ({ key, value }))}
-                        columns={[
-                            { title: t.KEY || 'Key', dataIndex: 'key', key: 'key' },
-                            { title: t.VALUE || 'Value', dataIndex: 'value', key: 'value' },
-                        ]}
-                        pagination={false}
-                        size="small"
-                        bordered
-                        rowKey="key"
-                    />
-                </Modal>
-
-                <Modal
-                    title={`${t.BROKER} [${currentBrokerName}][${currentIndex}]`}
-                    open={configModalVisible}
-                    footer={null}
-                    onCancel={() => setConfigModalVisible(false)}
-                    width={800}
-                    bodyStyle={{ maxHeight: '60vh', overflowY: 'auto' }}
-                >
-                    <Table
-                        dataSource={Object.entries(currentConfig).map(([key, value]) => ({ key, value }))}
-                        columns={[
-                            { title: t.KEY || 'Key', dataIndex: 'key', key: 'key' },
-                            { title: t.VALUE || 'Value', dataIndex: 'value', key: 'value' },
-                        ]}
-                        pagination={false}
-                        size="small"
-                        bordered
-                        rowKey="key"
-                    />
-                </Modal>
-            </div>
-        </Spin>
     );
 };
 

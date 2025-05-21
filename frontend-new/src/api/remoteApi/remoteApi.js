@@ -38,7 +38,6 @@ const remoteApi = {
             return data;
         } catch (error) {
             console.error("Error fetching topic list:", error);
-            throw new Error("Failed to fetch topic list");
         }
     },
 
@@ -196,7 +195,6 @@ const remoteApi = {
             return data;
         } catch (error) {
             console.error("Error fetching message page by topic:", error);
-            throw new Error("Failed to fetch message page by topic");
         }
     },
 
@@ -213,7 +211,7 @@ const remoteApi = {
             return data;
         } catch (error) {
             console.error("Error fetching message by topic and key:", error);
-            throw new Error("Failed to fetch message by topic and key");
+
         }
     },
 
@@ -235,7 +233,6 @@ const remoteApi = {
             return data;
         } catch (error) {
             console.error("Error fetching message by message ID:", error);
-            throw new Error("Failed to fetch message by message ID");
         }
     },
 
@@ -256,7 +253,7 @@ const remoteApi = {
             return data;
         } catch (error) {
             console.error("Error resending message directly:", error);
-            throw new Error("Failed to resend message directly");
+
         }
     },
 

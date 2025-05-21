@@ -1,13 +1,14 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {Spin, DatePicker, Select, Card, Row, Col, Table, notification} from 'antd';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {Card, Col, DatePicker, message, notification, Row, Select, Spin, Table} from 'antd';
 import * as echarts from 'echarts';
 import moment from 'moment';
-import { useLanguage } from '../../i18n/LanguageContext';
-import {tools,remoteApi} from '../../api/remoteApi/remoteApi';
-const { Option } = Select;
+import {useLanguage} from '../../i18n/LanguageContext';
+import {remoteApi, tools} from '../../api/remoteApi/remoteApi';
+
+const {Option} = Select;
 
 const DashboardPage = () => {
-    const { t } = useLanguage();
+    const {t} = useLanguage();
     const barChartRef = useRef(null);
     const lineChartRef = useRef(null);
     const topicBarChartRef = useRef(null);
@@ -25,14 +26,17 @@ const DashboardPage = () => {
     const topicBarChartInstance = useRef(null);
     const topicLineChartInstance = useRef(null);
 
+    const [messageApi, msgContextHolder] = message.useMessage();
+    const [notificationApi, notificationContextHolder] = notification.useNotification();
+
     const initChart = useCallback((chartRef, titleText, isLine = false) => {
         if (chartRef.current) {
             const chart = echarts.init(chartRef.current);
             let option = {
-                title: { text: titleText },
+                title: {text: titleText},
                 tooltip: {},
-                legend: { data: ['TotalMsg'] },
-                axisPointer: { type: 'shadow' },
+                legend: {data: ['TotalMsg']},
+                axisPointer: {type: 'shadow'},
                 xAxis: {
                     type: 'category',
                     data: [],
@@ -42,44 +46,53 @@ const DashboardPage = () => {
                         rotate: 0,
                         interval: 0
                     },
-                    axisTick: { show: true },
-                    axisLine: { show: true },
+                    axisTick: {show: true},
+                    axisLine: {show: true},
                     z: 10
                 },
                 yAxis: {
                     type: 'value',
                     boundaryGap: [0, '100%'],
-                    axisLabel: { formatter: (value) => value.toFixed(2) },
-                    splitLine: { show: true }
+                    axisLabel: {formatter: (value) => value.toFixed(2)},
+                    splitLine: {show: true}
                 },
-                series: [{ name: 'TotalMsg', type: 'bar', data: [] }]
+                series: [{name: 'TotalMsg', type: 'bar', data: []}]
             };
 
             if (isLine) {
                 option = {
-                    title: { text: titleText },
+                    title: {text: titleText},
                     toolbox: {
                         feature: {
-                            dataZoom: { yAxisIndex: 'none' },
+                            dataZoom: {yAxisIndex: 'none'},
                             restore: {},
                             saveAsImage: {}
                         }
                     },
-                    tooltip: { trigger: 'axis', axisPointer: { animation: false } },
+                    tooltip: {trigger: 'axis', axisPointer: {animation: false}},
                     yAxis: {
                         type: 'value',
                         boundaryGap: [0, '80%'],
-                        axisLabel: { formatter: (value) => value.toFixed(2) },
-                        splitLine: { show: true }
+                        axisLabel: {formatter: (value) => value.toFixed(2)},
+                        splitLine: {show: true}
                     },
                     dataZoom: [{
                         type: 'inside', start: 90, end: 100
                     }, {
-                        start: 0, end: 10, handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
-                        handleSize: '80%', handleStyle: { color: '#fff', shadowBlur: 3, shadowColor: 'rgba(0, 0, 0, 0.6)', shadowOffsetX: 2, shadowOffsetY: 2 }
+                        start: 0,
+                        end: 10,
+                        handleIcon: 'M10.7,11.9v-1.3H9.3v1.3c-4.9,0.3-8.8,4.4-8.8,9.4c0,5,3.9,9.1,8.8,9.4v1.3h1.3v-1.3c4.9-0.3,8.8-4.4,8.8-9.4C19.5,16.3,15.6,12.2,10.7,11.9z M13.3,24.4H6.7V23h6.6V24.4z M13.3,19.6H6.7v-1.4h6.6V19.6z',
+                        handleSize: '80%',
+                        handleStyle: {
+                            color: '#fff',
+                            shadowBlur: 3,
+                            shadowColor: 'rgba(0, 0, 0, 0.6)',
+                            shadowOffsetX: 2,
+                            shadowOffsetY: 2
+                        }
                     }],
-                    legend: { data: [], top: 30 },
-                    xAxis: { type: 'time', boundaryGap: false, data: [] },
+                    legend: {data: [], top: 30},
+                    xAxis: {type: 'time', boundaryGap: false, data: []},
                     series: []
                 };
             }
@@ -105,8 +118,8 @@ const DashboardPage = () => {
 
     const getBrokerBarChartOp = useCallback((xAxisData, data) => {
         return {
-            xAxis: { data: xAxisData },
-            series: [{ name: 'TotalMsg', data: data }]
+            xAxis: {data: xAxisData},
+            series: [{name: 'TotalMsg', data: data}]
         };
     }, []);
 
@@ -136,9 +149,9 @@ const DashboardPage = () => {
         });
 
         return {
-            legend: { data: legend },
+            legend: {data: legend},
             color: ["#FF0000", "#00BFFF", "#FF00FF", "#1ce322", "#000000", '#EE7942'],
-            xAxis: { type: 'category', boundaryGap: false, data: xAxisData },
+            xAxis: {type: 'category', boundaryGap: false, data: xAxisData},
             series: series
         };
     }, []);
@@ -169,8 +182,8 @@ const DashboardPage = () => {
         });
 
         return {
-            legend: { data: legend },
-            xAxis: { type: 'category', boundaryGap: false, data: xAxisData },
+            legend: {data: legend},
+            xAxis: {type: 'category', boundaryGap: false, data: xAxisData},
             series: series
         };
     }, []);
@@ -190,7 +203,7 @@ const DashboardPage = () => {
                 });
                 lineChartInstance.current?.setOption(getBrokerLineChartOp(_xAxisData, _data));
             } else {
-                notification.error({ message: resp.errMsg || t.QUERY_BROKER_HISTORY_FAILED, duration: 2 });
+                notificationApi.error({message: resp.errMsg || t.QUERY_BROKER_HISTORY_FAILED, duration: 2});
             }
         });
 
@@ -203,7 +216,7 @@ const DashboardPage = () => {
                     _data[selectedTopic] = resp.data;
                     topicLineChartInstance.current?.setOption(getTopicLineChartOp([selectedTopic], _data));
                 } else {
-                    notification.error({ message: resp.errMsg || t.QUERY_TOPIC_HISTORY_FAILED, duration: 2 });
+                    notificationApi.error({message: resp.errMsg || t.QUERY_TOPIC_HISTORY_FAILED, duration: 2});
                 }
             });
         }
@@ -246,7 +259,7 @@ const DashboardPage = () => {
                 });
                 barChartInstance.current?.setOption(getBrokerBarChartOp(xAxisData, data));
             } else {
-                notification.error({ message: resp.errMsg || t.QUERY_CLUSTER_LIST_FAILED, duration: 2 });
+                notificationApi.error({message: resp.errMsg || t.QUERY_CLUSTER_LIST_FAILED, duration: 2});
             }
         });
     }, [getBrokerBarChartOp, t]);
@@ -293,11 +306,11 @@ const DashboardPage = () => {
                             interval: 0
                         },
                     },
-                    series: [{ name: 'TotalMsg', data: data }]
+                    series: [{name: 'TotalMsg', data: data}]
                 };
                 topicBarChartInstance.current?.setOption(option);
             } else {
-                notification.error({ message: resp.errMsg || t.QUERY_TOPIC_CURRENT_FAILED, duration: 2 });
+                notificationApi.error({message: resp.errMsg || t.QUERY_TOPIC_CURRENT_FAILED, duration: 2});
             }
         });
     }, [selectedTopic, t]);
@@ -316,8 +329,8 @@ const DashboardPage = () => {
     }, [queryLineData]);
 
     const brokerColumns = [
-        { title: t.BROKER_NAME, dataIndex: 'brokerName', key: 'brokerName' },
-        { title: t.BROKER_ADDR, dataIndex: 'brokerAddress', key: 'brokerAddress' },
+        {title: t.BROKER_NAME, dataIndex: 'brokerName', key: 'brokerName'},
+        {title: t.BROKER_ADDR, dataIndex: 'brokerAddress', key: 'brokerAddress'},
         {
             title: t.TOTAL_MSG_RECEIVED_TODAY,
             dataIndex: 'msgGetTotalTodayNow',
@@ -342,78 +355,83 @@ const DashboardPage = () => {
     ];
 
     return (
-        <div style={{ padding: '20px' }}>
-            <Spin spinning={loading} tip={t.LOADING}>
-                <Row gutter={[16, 16]} style={{ marginBottom: '20px' }}>
-                    <Col span={12}>
-                        <Card title={t.BROKER_OVERVIEW} bordered>
-                            <Table
-                                columns={brokerColumns}
-                                dataSource={brokerTableData}
-                                rowKey="key"
-                                pagination={false}
-                                size="small"
-                                bordered
-                                scroll={{ y: 240 }}
-                            />
-                        </Card>
-                    </Col>
-                    <Col span={12}>
-                        <Card title={t.DASHBOARD_DATE_SELECTION} bordered>
-                            <DatePicker
-                                format="YYYY-MM-DD"
-                                value={date}
-                                onChange={setDate}
-                                allowClear
-                                style={{ width: '100%' }}
-                            />
-                        </Card>
-                    </Col>
-                </Row>
+        <>
+            {msgContextHolder}
+            {notificationContextHolder}
+            <div style={{padding: '20px'}}>
+                <Spin spinning={loading} tip={t.LOADING}>
+                    <Row gutter={[16, 16]} style={{marginBottom: '20px'}}>
+                        <Col span={12}>
+                            <Card title={t.BROKER_OVERVIEW} bordered>
+                                <Table
+                                    columns={brokerColumns}
+                                    dataSource={brokerTableData}
+                                    rowKey="key"
+                                    pagination={false}
+                                    size="small"
+                                    bordered
+                                    scroll={{y: 240}}
+                                />
+                            </Card>
+                        </Col>
+                        <Col span={12}>
+                            <Card title={t.DASHBOARD_DATE_SELECTION} bordered>
+                                <DatePicker
+                                    format="YYYY-MM-DD"
+                                    value={date}
+                                    onChange={setDate}
+                                    allowClear
+                                    style={{width: '100%'}}
+                                />
+                            </Card>
+                        </Col>
+                    </Row>
 
-                <Row gutter={[16, 16]} style={{ marginBottom: '20px' }}>
-                    <Col span={12}>
-                        <Card title={`${t.BROKER} TOP 10`} bordered>
-                            <div ref={barChartRef} style={{ height: 300 }} />
-                        </Card>
-                    </Col>
-                    <Col span={12}>
-                        <Card title={`${t.BROKER} 5min ${t.TREND}`} bordered>
-                            <div ref={lineChartRef} style={{ height: 300 }} />
-                        </Card>
-                    </Col>
-                </Row>
+                    <Row gutter={[16, 16]} style={{marginBottom: '20px'}}>
+                        <Col span={12}>
+                            <Card title={`${t.BROKER} TOP 10`} bordered>
+                                <div ref={barChartRef} style={{height: 300}}/>
+                            </Card>
+                        </Col>
+                        <Col span={12}>
+                            <Card title={`${t.BROKER} 5min ${t.TREND}`} bordered>
+                                <div ref={lineChartRef} style={{height: 300}}/>
+                            </Card>
+                        </Col>
+                    </Row>
 
-                <Row gutter={[16, 16]}>
-                    <Col span={12}>
-                        <Card title={`${t.TOPIC} TOP 10`} bordered>
-                            <div ref={topicBarChartRef} style={{ height: 300 }} />
-                        </Card>
-                    </Col>
-                    <Col span={12}>
-                        <Card title={`${t.TOPIC} 5min ${t.TREND}`} bordered>
-                            <div style={{ marginBottom: '10px' }}>
-                                <Select
-                                    showSearch
-                                    style={{ width: '100%' }}
-                                    placeholder={t.SELECT_TOPIC_PLACEHOLDER}
-                                    value={selectedTopic}
-                                    onChange={setSelectedTopic}
-                                    filterOption={(input, option) =>
-                                        option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                    }
-                                >
-                                    {topicNames.map(topic => (
-                                        <Option key={topic} value={topic}>{topic}</Option>
-                                    ))}
-                                </Select>
-                            </div>
-                            <div ref={topicLineChartRef} style={{ height: 300 }} />
-                        </Card>
-                    </Col>
-                </Row>
-            </Spin>
-        </div>
+                    <Row gutter={[16, 16]}>
+                        <Col span={12}>
+                            <Card title={`${t.TOPIC} TOP 10`} bordered>
+                                <div ref={topicBarChartRef} style={{height: 300}}/>
+                            </Card>
+                        </Col>
+                        <Col span={12}>
+                            <Card title={`${t.TOPIC} 5min ${t.TREND}`} bordered>
+                                <div style={{marginBottom: '10px'}}>
+                                    <Select
+                                        showSearch
+                                        style={{width: '100%'}}
+                                        placeholder={t.SELECT_TOPIC_PLACEHOLDER}
+                                        value={selectedTopic}
+                                        onChange={setSelectedTopic}
+                                        filterOption={(input, option) =>
+                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                        }
+                                    >
+                                        {topicNames.map(topic => (
+                                            <Option key={topic} value={topic}>{topic}</Option>
+                                        ))}
+                                    </Select>
+                                </div>
+                                <div ref={topicLineChartRef} style={{height: 300}}/>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Spin>
+            </div>
+        </>
+
     );
 };
 

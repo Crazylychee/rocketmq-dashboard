@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Table, Input, Button, Checkbox, Switch, Spin, Modal, notification } from 'antd';
-import { useLanguage } from '../../i18n/LanguageContext';
-import { remoteApi } from '../../api/remoteApi/remoteApi';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Button, Checkbox, Input, message, notification, Spin, Table} from 'antd';
+import {useLanguage} from '../../i18n/LanguageContext';
+import {remoteApi} from '../../api/remoteApi/remoteApi';
 import ClientInfoModal from "../../components/consumer/ClientInfoModal";
 import ConsumerDetailModal from "../../components/consumer/ConsumerDetailModal";
 import ConsumerConfigModal from "../../components/consumer/ConsumerConfigModal";
 import DeleteConsumerModal from "../../components/consumer/DeleteConsumerModal";
 
 const ConsumerGroupList = () => {
-    const { t } = useLanguage();
+    const {t} = useLanguage();
     const [filterStr, setFilterStr] = useState('');
     const [filterNormal, setFilterNormal] = useState(true);
     const [filterFIFO, setFilterFIFO] = useState(false);
@@ -24,9 +24,10 @@ const ConsumerGroupList = () => {
     const [showClientInfo, setShowClientInfo] = useState(false);
     const [showConsumeDetail, setShowConsumeDetail] = useState(false);
     const [showConfig, setShowConfig] = useState(false);
-    const [isAddConfig,setIsAddConfig] = useState(false);
+    const [isAddConfig, setIsAddConfig] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-
+    const [messageApi, msgContextHolder] = message.useMessage();
+    const [notificationApi,notificationContextHolder] = notification.useNotification();
 
     const [paginationConf, setPaginationConf] = useState({
         current: 1,
@@ -47,10 +48,10 @@ const ConsumerGroupList = () => {
                 setAllConsumerGroupList(response.data);
                 filterList(1, response.data);
             } else {
-                Modal.error({ title: t.ERROR, content: response.errMsg });
+                messageApi.error({title: t.ERROR, content: response.errMsg});
             }
         } catch (error) {
-            Modal.error({ title: t.ERROR, content: t.FAILED_TO_FETCH_DATA });
+            messageApi.error({title: t.ERROR, content: t.FAILED_TO_FETCH_DATA});
             console.error("Error loading consumer groups:", error);
         } finally {
             setLoading(false);
@@ -150,7 +151,7 @@ const ConsumerGroupList = () => {
 
     const handleFilterInputChange = (value) => {
         setFilterStr(value);
-        setPaginationConf(prev => ({ ...prev, current: 1 }));
+        setPaginationConf(prev => ({...prev, current: 1}));
     };
 
     const handleTypeFilterChange = (filterType, checked) => {
@@ -167,7 +168,7 @@ const ConsumerGroupList = () => {
             default:
                 break;
         }
-        setPaginationConf(prev => ({ ...prev, current: 1 }));
+        setPaginationConf(prev => ({...prev, current: 1}));
     };
 
     const handleRefreshConsumerData = async () => {
@@ -176,12 +177,12 @@ const ConsumerGroupList = () => {
         setLoading(false);
 
         if (refreshResult && refreshResult.status === 0) {
-            notification.success({ message: t.REFRESH_SUCCESS, duration: 2 });
+            notificationApi.success({message: t.REFRESH_SUCCESS, duration: 2});
             loadConsumerGroups();
         } else if (refreshResult && refreshResult.errMsg) {
-            notification.error({ message: t.REFRESH_FAILED + ": " + refreshResult.errMsg, duration: 2 });
+            notificationApi.error({message: t.REFRESH_FAILED + ": " + refreshResult.errMsg, duration: 2});
         } else {
-            notification.error({ message: t.REFRESH_FAILED, duration: 2 });
+            notificationApi.error({message: t.REFRESH_FAILED, duration: 2});
         }
     };
 
@@ -219,10 +220,10 @@ const ConsumerGroupList = () => {
         const response = await remoteApi.refreshConsumerGroup(group);
         setLoading(false);
         if (response.status === 0) {
-            Modal.success({ content: `${group} ${t.REFRESHED}` });
+            messageApi.success({content: `${group} ${t.REFRESHED}`});
             loadConsumerGroups();
         } else {
-            Modal.error({ title: t.ERROR, content: response.errMsg });
+            messageApi.error({title: t.ERROR, content: response.errMsg});
         }
     };
 
@@ -232,7 +233,7 @@ const ConsumerGroupList = () => {
             sortKey,
             sortOrder: prev.sortKey === sortKey ? -prev.sortOrder : 1,
         }));
-        setPaginationConf(prev => ({ ...prev, current: 1 }));
+        setPaginationConf(prev => ({...prev, current: 1}));
     };
 
     const columns = [
@@ -244,7 +245,7 @@ const ConsumerGroupList = () => {
             render: (text) => {
                 const sysFlag = text.startsWith('%SYS%');
                 return (
-                    <span style={{ color: sysFlag ? 'red' : '' }}>
+                    <span style={{color: sysFlag ? 'red' : ''}}>
                         {sysFlag ? text.substring(5) : text}
                     </span>
                 );
@@ -303,7 +304,7 @@ const ConsumerGroupList = () => {
                         <Button
                             type="primary"
                             size="small"
-                            style={{ marginRight: 8, marginBottom: 8 }}
+                            style={{marginRight: 8, marginBottom: 8}}
                             onClick={() => handleClient(record.group, record.address)}
                         >
                             {t.CLIENT}
@@ -311,7 +312,7 @@ const ConsumerGroupList = () => {
                         <Button
                             type="primary"
                             size="small"
-                            style={{ marginRight: 8, marginBottom: 8 }}
+                            style={{marginRight: 8, marginBottom: 8}}
                             onClick={() => handleDetail(record.group, record.address)}
                         >
                             {t.CONSUME_DETAIL}
@@ -319,7 +320,7 @@ const ConsumerGroupList = () => {
                         <Button
                             type="primary"
                             size="small"
-                            style={{ marginRight: 8, marginBottom: 8 }}
+                            style={{marginRight: 8, marginBottom: 8}}
                             onClick={() => handleUpdateConfigDialog(record.group)}
                         >
                             {t.CONFIG}
@@ -327,7 +328,7 @@ const ConsumerGroupList = () => {
                         <Button
                             type="primary"
                             size="small"
-                            style={{ marginRight: 8, marginBottom: 8 }}
+                            style={{marginRight: 8, marginBottom: 8}}
                             onClick={() => handleRefreshConsumerGroup(record.group)}
                         >
                             {t.REFRESH}
@@ -337,7 +338,7 @@ const ConsumerGroupList = () => {
                                 type="primary"
                                 danger
                                 size="small"
-                                style={{ marginRight: 8, marginBottom: 8 }}
+                                style={{marginRight: 8, marginBottom: 8}}
                                 onClick={() => handleDelete(record.group)}
                             >
                                 {t.DELETE}
@@ -359,86 +360,93 @@ const ConsumerGroupList = () => {
     };
 
     return (
-        <div style={{ padding: '20px' }}>
-            <Spin spinning={loading} tip={t.LOADING}>
-                <div style={{ marginBottom: '20px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <label style={{ marginRight: '8px' }}>{t.SUBSCRIPTION_GROUP}:</label>
-                            <Input
-                                style={{ width: '200px' }}
-                                value={filterStr}
-                                onChange={(e) => handleFilterInputChange(e.target.value)}
-                            />
-                        </div>
-                        <Checkbox checked={filterNormal} onChange={(e) => handleTypeFilterChange('normal', e.target.checked)}>
-                            {t.NORMAL}
-                        </Checkbox>
-                        {rmqVersion && (
-                            <Checkbox checked={filterFIFO} onChange={(e) => handleTypeFilterChange('fifo', e.target.checked)}>
-                                {t.FIFO}
+        <>
+            {msgContextHolder}
+            {notificationContextHolder}
+            <div style={{padding: '20px'}}>
+                <Spin spinning={loading} tip={t.LOADING}>
+                    <div style={{marginBottom: '20px'}}>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '15px'}}>
+                            <div style={{display: 'flex', alignItems: 'center'}}>
+                                <label style={{marginRight: '8px'}}>{t.SUBSCRIPTION_GROUP}:</label>
+                                <Input
+                                    style={{width: '200px'}}
+                                    value={filterStr}
+                                    onChange={(e) => handleFilterInputChange(e.target.value)}
+                                />
+                            </div>
+                            <Checkbox checked={filterNormal}
+                                      onChange={(e) => handleTypeFilterChange('normal', e.target.checked)}>
+                                {t.NORMAL}
                             </Checkbox>
-                        )}
-                        <Checkbox checked={filterSystem} onChange={(e) => handleTypeFilterChange('system', e.target.checked)}>
-                            {t.SYSTEM}
-                        </Checkbox>
-                        {writeOperationEnabled && (
-                            <Button type="primary" onClick={handleOpenAddDialog}>
-                                {t.ADD} / {t.UPDATE}
+                            {rmqVersion && (
+                                <Checkbox checked={filterFIFO}
+                                          onChange={(e) => handleTypeFilterChange('fifo', e.target.checked)}>
+                                    {t.FIFO}
+                                </Checkbox>
+                            )}
+                            <Checkbox checked={filterSystem}
+                                      onChange={(e) => handleTypeFilterChange('system', e.target.checked)}>
+                                {t.SYSTEM}
+                            </Checkbox>
+                            {writeOperationEnabled && (
+                                <Button type="primary" onClick={handleOpenAddDialog}>
+                                    {t.ADD} / {t.UPDATE}
+                                </Button>
+                            )}
+                            <Button type="primary" onClick={handleRefreshConsumerData}>
+                                {t.REFRESH}
                             </Button>
-                        )}
-                        <Button type="primary" onClick={handleRefreshConsumerData}>
-                            {t.REFRESH}
-                        </Button>
-                        {/*<Switch*/}
-                        {/*    checked={intervalProcessSwitch}*/}
-                        {/*    onChange={(checked) => setIntervalProcessSwitch(checked)}*/}
-                        {/*    checkedChildren={t.AUTO_REFRESH}*/}
-                        {/*    unCheckedChildren={t.AUTO_REFRESH}*/}
-                        {/*/>*/}
+                            {/*<Switch*/}
+                            {/*    checked={intervalProcessSwitch}*/}
+                            {/*    onChange={(checked) => setIntervalProcessSwitch(checked)}*/}
+                            {/*    checkedChildren={t.AUTO_REFRESH}*/}
+                            {/*    unCheckedChildren={t.AUTO_REFRESH}*/}
+                            {/*/>*/}
+                        </div>
                     </div>
-                </div>
 
-                <Table
-                    dataSource={consumerGroupShowList}
-                    columns={columns}
-                    rowKey="group"
-                    bordered
-                    pagination={paginationConf}
-                    onChange={handleTableChange}
-                    sortDirections={['ascend', 'descend']}
+                    <Table
+                        dataSource={consumerGroupShowList}
+                        columns={columns}
+                        rowKey="group"
+                        bordered
+                        pagination={paginationConf}
+                        onChange={handleTableChange}
+                        sortDirections={['ascend', 'descend']}
+                    />
+                </Spin>
+
+                <ClientInfoModal
+                    visible={showClientInfo}
+                    group={selectedGroup}
+                    address={selectedAddress}
+                    onCancel={() => setShowClientInfo(false)}
                 />
-            </Spin>
 
-            <ClientInfoModal
-                visible={showClientInfo}
-                group={selectedGroup}
-                address={selectedAddress}
-                onCancel={() => setShowClientInfo(false)}
-            />
+                <ConsumerDetailModal
+                    visible={showConsumeDetail}
+                    group={selectedGroup}
+                    address={selectedAddress}
+                    onCancel={() => setShowConsumeDetail(false)}
+                />
 
-            <ConsumerDetailModal
-                visible={showConsumeDetail}
-                group={selectedGroup}
-                address={selectedAddress}
-                onCancel={() => setShowConsumeDetail(false)}
-            />
+                <ConsumerConfigModal
+                    visible={showConfig}
+                    isAddConfig={isAddConfig}
+                    group={selectedGroup}
+                    onCancel={() => setShowConfig(false)}
+                    onSuccess={loadConsumerGroups}
+                />
 
-            <ConsumerConfigModal
-                visible={showConfig}
-                isAddConfig={isAddConfig}
-                group={selectedGroup}
-                onCancel={() => setShowConfig(false)}
-                onSuccess={loadConsumerGroups}
-            />
-
-            <DeleteConsumerModal
-                visible={showDeleteModal}
-                group={selectedGroup}
-                onCancel={() => setShowDeleteModal(false)}
-                onSuccess={loadConsumerGroups}
-            />
-        </div>
+                <DeleteConsumerModal
+                    visible={showDeleteModal}
+                    group={selectedGroup}
+                    onCancel={() => setShowDeleteModal(false)}
+                    onSuccess={loadConsumerGroups}
+                />
+            </div>
+        </>
     );
 };
 
