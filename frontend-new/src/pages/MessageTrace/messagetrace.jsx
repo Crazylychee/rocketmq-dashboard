@@ -3,10 +3,8 @@ import { Tabs, Form, Select, Input, Button, Table, Spin, Modal, Typography, noti
 import moment from 'moment';
 import { SearchOutlined } from '@ant-design/icons';
 import { useLanguage } from '../../i18n/LanguageContext';
-import MessageTraceDetailViewDialog from "../../components/MessageTraceDetailViewDialog"; // 根据实际路径调整
-// 引入 D3 或 G6 等图表库，用于绘制消息轨迹图，这里以伪代码表示
-// import * as d3 from 'd3'; // 如果使用D3
-// import G6 from '@antv/g6'; // 如果使用G6
+import MessageTraceDetailViewDialog from "../../components/MessageTraceDetailViewDialog";
+import { remoteApi } from '../../api/remoteApi/remoteApi'; // Import the remoteApi
 
 const { TabPane } = Tabs;
 const { Option } = Select;
@@ -20,9 +18,9 @@ const MessageTraceQueryPage = () => {
 
     // 轨迹主题选择
     const [allTraceTopicList, setAllTraceTopicList] = useState([]);
-    const [selectedTraceTopic, setSelectedTraceTopic] = useState(null);
+    const [selectedTraceTopic, setSelectedTraceTopic] = useState(null); // Initialize as null or a default trace topic if applicable
 
-    // Topic 查询状态 (与MessageQueryPage类似，用于获取消息列表)
+    // Topic 查询状态
     const [allTopicList, setAllTopicList] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
     const [key, setKey] = useState('');
@@ -32,15 +30,48 @@ const MessageTraceQueryPage = () => {
     const [messageId, setMessageId] = useState('');
     const [queryMessageByMessageIdResult, setQueryMessageByMessageIdResult] = useState([]);
 
+    // State for MessageTraceDetailViewDialog
+    const [isTraceDetailViewOpen, setIsTraceDetailViewOpen] = useState(false);
+    const [traceDetailData, setTraceDetailData] = useState(null);
+
     useEffect(() => {
-        // 模拟加载所有 Topic 和 Trace Topic 列表
-        setLoading(true);
-        setTimeout(() => {
-            setAllTopicList(['TopicA', 'TopicB', 'TopicC']);
-            setAllTraceTopicList(['RMQ_SYS_TRACE_TOPIC', 'CustomTraceTopic']);
-            setLoading(false);
-        }, 500);
-    }, []);
+        const fetchTopics = async () => {
+            setLoading(true);
+            try {
+                const resp = await remoteApi.queryTopic(true);
+
+                if (resp.status === 0) {
+                    const topics = resp.data.topicList.sort();
+                    setAllTopicList(topics);
+
+                    const traceTopics = topics.filter(topic =>
+                        !topic.startsWith('%RETRY%') && !topic.startsWith('%DLQ%')
+                    );
+                    setAllTraceTopicList(traceTopics);
+                    // Optionally set a default trace topic if available, e.g., 'RMQ_SYS_TRACE_TOPIC'
+                    if (traceTopics.includes('RMQ_SYS_TRACE_TOPIC')) {
+                        setSelectedTraceTopic('RMQ_SYS_TRACE_TOPIC');
+                    } else if (traceTopics.length > 0) {
+                        setSelectedTraceTopic(traceTopics[0]); // Select the first one if no default
+                    }
+                } else {
+                    notification.error({
+                        message: t.ERROR,
+                        description: resp.errMsg || t.QUERY_FAILED,
+                    });
+                }
+            } catch (error) {
+                notification.error({
+                    message: t.ERROR,
+                    description: error.message || t.QUERY_FAILED,
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTopics();
+    }, [t]);
 
     const queryMessageByTopicAndKey = async () => {
         if (!selectedTopic || !key) {
@@ -51,28 +82,30 @@ const MessageTraceQueryPage = () => {
             return;
         }
         setLoading(true);
-        console.log("根据Topic和Key查询消息 (用于轨迹):", { selectedTopic, key });
+
         try {
-            // 模拟 API 调用，只返回64条消息
-            const mockMessages = Array.from({ length: Math.min(64, Math.floor(Math.random() * 70)) }).map((_, i) => ({
-                msgId: `trace_key_msg_${Date.now()}_${i}`,
-                topic: selectedTopic,
-                properties: { TAGS: `Tag${i % 2}`, KEYS: key },
-                storeTimestamp: moment().subtract(i * 5, 'minutes').valueOf(),
-            }));
-            setQueryMessageByTopicAndKeyResult(mockMessages);
-            if (mockMessages.length === 0) {
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+            const data = await remoteApi.queryMessageByTopicAndKey(selectedTopic, key);
+            if (data.status === 0) {
+                setQueryMessageByTopicAndKeyResult(data.data);
+                if (data.data.length === 0) {
+                    notification.info({
+                        message: t.NO_RESULT,
+                        description: t.NO_MATCH_RESULT,
+                    });
+                }
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: data.errMsg || t.QUERY_FAILED,
                 });
+                setQueryMessageByTopicAndKeyResult([]); // Clear previous results on error
             }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
-                description: t.QUERY_FAILED,
+                description: error.message || t.QUERY_FAILED,
             });
-            console.error("查询失败:", error);
+            setQueryMessageByTopicAndKeyResult([]); // Clear previous results on error
         } finally {
             setLoading(false);
         }
@@ -87,128 +120,68 @@ const MessageTraceQueryPage = () => {
             return;
         }
         setLoading(true);
-        console.log("根据Message ID查询消息 (用于轨迹):", { msgId: msgIdToQuery, topic: topicToQuery });
-        try {
-            // 模拟 API 调用
-            const mockMessage = {
-                msgId: msgIdToQuery,
-                topic: topicToQuery,
-                properties: { TAGS: 'TraceTestTag', KEYS: 'TraceTestKey' },
-                storeTimestamp: Date.now(),
-            };
-            setQueryMessageByMessageIdResult([mockMessage]);
 
-            if (!mockMessage) {
-                notification.info({
-                    message: t.NO_RESULT,
-                    description: t.NO_MATCH_RESULT,
+        try {
+            const res = await remoteApi.queryMessageByMessageId(msgIdToQuery, topicToQuery);
+            if (res.status === 0) {
+                // 确保 data.data.messageView 存在，并将其包装成数组
+                setQueryMessageByMessageIdResult(res.data && res.data.messageView ? [res.data.messageView] : []);
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: res.errMsg || t.QUERY_FAILED,
                 });
+                setQueryMessageByMessageIdResult([]); // 清除错误时的旧数据
             }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
-                description: t.QUERY_FAILED,
+                description: error.message || t.QUERY_FAILED,
             });
-            console.error("查询失败:", error);
+            setQueryMessageByMessageIdResult([]); // 清除错误时的旧数据
         } finally {
             setLoading(false);
         }
     };
 
     const queryMessageTraceByMessageId = async (msgId, traceTopic) => {
-        setLoading(true);
-        console.log(`查询消息轨迹: MsgId=${msgId}, 轨迹主题=${traceTopic || 'RMQ_SYS_TRACE_TOPIC'}`);
-        try {
-            // 模拟 API 调用返回消息轨迹数据
-            const mockTraceData = {
-                producerNode: {
-                    msgId: msgId,
-                    topic: "ExampleTopic",
-                    groupName: "ProducerGroup1",
-                    keys: "Key123",
-                    tags: "TagA",
-                    offSetMsgId: "offsetMsgId123",
-                    traceNode: {
-                        beginTimestamp: moment().subtract(10, 'seconds').valueOf(),
-                        endTimestamp: moment().subtract(9, 'seconds').valueOf(),
-                        costTime: 1000,
-                        msgType: "Normal",
-                        clientHost: "192.168.1.100",
-                        storeHost: "192.168.1.200:10911",
-                        retryTimes: 0
-                    },
-                    transactionNodeList: [
-                        {
-                            beginTimestamp: moment().subtract(8, 'seconds').valueOf(),
-                            transactionState: "COMMIT_MESSAGE",
-                            fromTransactionCheck: true,
-                            clientHost: "192.168.1.100",
-                            storeHost: "192.168.1.200:10911"
-                        }
-                    ]
-                },
-                subscriptionNodeList: [
-                    {
-                        subscriptionGroup: "ConsumerGroupA",
-                        consumeNodeList: [
-                            {
-                                beginTimestamp: moment().subtract(5, 'seconds').valueOf(),
-                                endTimestamp: moment().subtract(4, 'seconds').valueOf(),
-                                costTime: 800,
-                                status: "CONSUME_OK",
-                                retryTimes: 0,
-                                clientHost: "192.168.1.101",
-                                storeHost: "192.168.1.200:10911"
-                            },
-                            {
-                                beginTimestamp: moment().subtract(3, 'seconds').valueOf(),
-                                endTimestamp: moment().subtract(2, 'seconds').valueOf(),
-                                costTime: 500,
-                                status: "CONSUME_OK",
-                                retryTimes: 1,
-                                clientHost: "192.168.1.102",
-                                storeHost: "192.168.1.200:10911"
-                            }
-                        ]
-                    },
-                    {
-                        subscriptionGroup: "ConsumerGroupB",
-                        consumeNodeList: [
-                            {
-                                beginTimestamp: moment().subtract(7, 'seconds').valueOf(),
-                                endTimestamp: -1, // 模拟未消费完成
-                                costTime: -1, // 模拟未消费完成
-                                status: "CONSUME_FAILED",
-                                retryTimes: 0,
-                                clientHost: "192.168.1.103",
-                                storeHost: "192.168.1.200:10911"
-                            }
-                        ]
-                    }
-                ]
-            };
-
-            setLoading(false);
-            Modal.info({
-                title: t.MESSAGE_TRACE_DETAIL,
-                width: '80%', // 调整宽度以容纳图表
-                content: (
-                    <MessageTraceDetailViewDialog
-                        ngDialogData={mockTraceData}
-                    />
-                ),
-                onOk: () => {},
-                okText: t.CLOSE,
+        if (!msgId) {
+            notification.warning({
+                message: t.WARNING,
+                description: t.MESSAGE_ID_REQUIRED,
             });
+            return;
+        }
+        setLoading(true);
+
+        try {
+            const data = await remoteApi.queryMessageTraceByMessageId(msgId, traceTopic || 'RMQ_SYS_TRACE_TOPIC');
+            if (data.status === 0) {
+                setTraceDetailData(data.data);
+                setIsTraceDetailViewOpen(true);
+            } else {
+                notification.error({
+                    message: t.ERROR,
+                    description: data.errMsg || t.QUERY_FAILED,
+                });
+                setTraceDetailData(null); // Clear previous trace data on error
+                setIsTraceDetailViewOpen(false); // Do not open dialog if data is not available
+            }
         } catch (error) {
             notification.error({
                 message: t.ERROR,
-                description: t.QUERY_FAILED,
+                description: error.message || t.QUERY_FAILED,
             });
-            console.error("查询失败:", error);
+            setTraceDetailData(null); // Clear previous trace data on error
+            setIsTraceDetailViewOpen(false); // Do not open dialog if data is not available
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleCloseTraceDetailView = () => {
+        setIsTraceDetailViewOpen(false);
+        setTraceDetailData(null);
     };
 
     const keyColumns = [
@@ -236,6 +209,7 @@ const MessageTraceQueryPage = () => {
 
     const messageIdColumns = [
         { title: 'Message ID', dataIndex: 'msgId', key: 'msgId', align: 'center' },
+        // 注意：这里的 dataIndex 直接指向了 messageView 内部的属性
         { title: 'Tag', dataIndex: ['properties', 'TAGS'], key: 'tags', align: 'center' },
         { title: 'Message Key', dataIndex: ['properties', 'KEYS'], key: 'keys', align: 'center' },
         {
@@ -270,7 +244,7 @@ const MessageTraceQueryPage = () => {
                                 value={selectedTraceTopic}
                                 onChange={setSelectedTraceTopic}
                                 filterOption={(input, option) =>
-                                    option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                    option.children && option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                 }
                             >
                                 {allTraceTopicList.map(topic => (
@@ -296,7 +270,7 @@ const MessageTraceQueryPage = () => {
                                         onChange={setSelectedTopic}
                                         required
                                         filterOption={(input, option) =>
-                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                                            option.children && option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                         }
                                     >
                                         <Option value="">{t.SELECT_TOPIC_PLACEHOLDER}</Option>
@@ -341,9 +315,12 @@ const MessageTraceQueryPage = () => {
                                         value={selectedTopic}
                                         onChange={setSelectedTopic}
                                         required
-                                        filterOption={(input, option) =>
-                                            option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
-                                        }
+                                        filterOption={(input, option) => {
+                                            if (option.children && typeof option.children === 'string') {
+                                                return option.children.toLowerCase().includes(input.toLowerCase());
+                                            }
+                                            return false;
+                                        }}
                                     >
                                         <Option value="">{t.SELECT_TOPIC_PLACEHOLDER}</Option>
                                         {allTopicList.map(topic => (
@@ -377,6 +354,47 @@ const MessageTraceQueryPage = () => {
                     </TabPane>
                 </Tabs>
             </Spin>
+
+            {/* MessageTraceDetailViewDialog as a child component */}
+            {isTraceDetailViewOpen && traceDetailData && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000,
+                }}>
+                    <div style={{
+                        backgroundColor: '#fff',
+                        padding: '20px',
+                        borderRadius: '8px',
+                        width: '80%',
+                        maxHeight: '90%',
+                        overflowY: 'auto',
+                        position: 'relative'
+                    }}>
+                        <Typography.Title level={4} style={{ marginBottom: '20px' }}>{t.MESSAGE_TRACE_DETAIL}</Typography.Title>
+                        <Button
+                            onClick={handleCloseTraceDetailView}
+                            style={{
+                                position: 'absolute',
+                                top: '20px',
+                                right: '20px',
+                            }}
+                        >
+                            {t.CLOSE}
+                        </Button>
+                        <MessageTraceDetailViewDialog
+                            ngDialogData={traceDetailData}
+                        />
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

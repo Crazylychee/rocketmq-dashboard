@@ -44,7 +44,7 @@ const MessageQueryPage = () => {
     const fetchAllTopics = useCallback(async () => {
         setLoading(true);
         try {
-            const resp = await remoteApi.queryTopic();
+            const resp = await remoteApi.queryTopic(false);
             if (resp.status === 0) {
                 setAllTopicList(resp.data.topicList.sort());
             } else {

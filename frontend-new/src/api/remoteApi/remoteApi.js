@@ -14,11 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// 可以是单独的 api.js 或 utils.js 文件
-// appConfig 应该根据你的项目实际情况定义，例如在 src/config.js
-// src/remoteApi/remoteApi.js (或你存放 remoteApi 和 tools 的文件)
-
-// appConfig 应该根据你的项目实际情况定义，例如在 src/config.js
 const appConfig = {
     apiBaseUrl: 'http://localhost:8082' // 请替换为你的实际 API Base URL
 };
@@ -31,14 +26,50 @@ const remoteApi = {
         return `${appConfig.apiBaseUrl}/${endpoint}`;
     },
 
-    queryTopic: async () => {
+    queryTopic: async (skipSysProcess) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/list.query"));
+            const params = new URLSearchParams();
+            if (skipSysProcess) {
+                params.append('skipSysProcess', 'true');
+            }
+
+            const response = await fetch(remoteApi.buildUrl(`/topic/list.query?${params.toString()}`));
             const data = await response.json();
-            return data
+            return data;
         } catch (error) {
             console.error("Error fetching topic list:", error);
             throw new Error("Failed to fetch topic list");
+        }
+    },
+
+
+    queryMessageByMessageId: async (msgId, topic, callback) => {
+        try {
+            const params = new URLSearchParams();
+            params.append('msgId', msgId);
+            params.append('topic', topic);
+
+            const response = await fetch(remoteApi.buildUrl(`/messageTrace/viewMessage.query?${params.toString()}`));
+            const data = await response.json();
+            return data
+        } catch (error) {
+            console.error("Error querying message by ID:", error);
+            callback({ status: 1, errMsg: "Failed to query message by ID" });
+        }
+    },
+
+    queryMessageTraceByMessageId: async (msgId, traceTopic, callback) => {
+        try {
+            const params = new URLSearchParams();
+            params.append('msgId', msgId);
+            params.append('traceTopic', traceTopic);
+
+            const response = await fetch(remoteApi.buildUrl(`/messageTrace/viewMessageTraceGraph.query?${params.toString()}`));
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error querying message trace:", error);
+
         }
     },
     queryDlqMessageByConsumerGroup: async (consumerGroup, beginTime, endTime, pageNum, pageSize, taskId) => {
@@ -86,18 +117,38 @@ const remoteApi = {
     },
     exportDlqMessage: async (msgId, consumerGroup) => {
         try {
-            // Note: For actual file download, the response should be handled differently (e.g., creating a Blob and a download link)
             const response = await fetch(remoteApi.buildUrl(`/dlqMessage/exportDlqMessage.do?msgId=${msgId}&consumerGroup=${consumerGroup}`));
-            // Assuming the server returns a success status for the API call itself, not the file content
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return { status: 0, msg: "Export request sent successfully" }; // Simulate success
+
+            // 假设服务器总是返回 JSON
+            const data = await response.json();
+
+            // 1. 打开一个新的空白窗口
+            const newWindow = window.open('', '_blank');
+
+            if (!newWindow) {
+                // 浏览器可能会阻止弹窗，需要用户允许
+                return { status: 1, errMsg: "Failed to open new window. Please allow pop-ups for this site." };
+            }
+
+            // 2. 将 JSON 数据格式化后写入新窗口
+            newWindow.document.write('<html><head><title>DLQ 导出内容</title></head><body>');
+            newWindow.document.write('<h1>DLQ 导出 JSON 内容</h1>');
+            // 使用 <pre> 标签保持格式，并使用 JSON.stringify 格式化 JSON 以便于阅读
+            newWindow.document.write('<pre>' + JSON.stringify(data, null, 2) + '</pre>');
+            newWindow.document.write('</body></html>');
+            newWindow.document.close(); // 关闭文档流，确保内容显示
+
+            return { status: 0, msg: "导出请求成功，内容已在新页面显示" };
         } catch (error) {
             console.error("Error exporting DLQ message:", error);
-            return { status: 1, errMsg: "Failed to export DLQ message" };
+            return { status: 1, errMsg: "Failed to export DLQ message: " + error.message };
         }
     },
+
     batchResendDlqMessage: async (messages) => {
         try {
             const response = await fetch(remoteApi.buildUrl("/dlqMessage/batchResendDlqMessage.do"), {
@@ -174,7 +225,12 @@ const remoteApi = {
      */
     viewMessage: async (msgId, topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/message/viewMessage.query?msgId=${msgId}&topic=${topic}`));
+            const encodedTopic = encodeURIComponent(topic);
+
+            const url = remoteApi.buildUrl(
+                `/message/viewMessage.query?msgId=${msgId}&topic=${encodedTopic}`
+            );
+            const response = await fetch(url);
             const data = await response.json();
             return data;
         } catch (error) {
@@ -191,6 +247,7 @@ const remoteApi = {
      * @returns {Promise<Object>} The API response.
      */
     resendMessageDirectly: async (msgId, consumerGroup, topic) => {
+        topic = encodeURIComponent(topic)
         try {
             const response = await fetch(remoteApi.buildUrl(`/message/consumeMessageDirectly.do?msgId=${msgId}&consumerGroup=${consumerGroup}&topic=${topic}`), {
                 method: 'POST',
@@ -204,6 +261,8 @@ const remoteApi = {
     },
 
     queryProducerConnection: async (topic, producerGroup, callback) => {
+        topic = encodeURIComponent(topic)
+        producerGroup = encodeURIComponent(producerGroup)
         try {
             const response = await fetch(remoteApi.buildUrl(`/producer/producerConnection.query?topic=${topic}&producerGroup=${producerGroup}`));
             const data = await response.json();
@@ -259,6 +318,7 @@ const remoteApi = {
     },
 
     createOrUpdateConsumerMonitor: async (consumeGroupName, minCount, maxDiffTotal) => {
+        consumeGroupName = encodeURIComponent(consumeGroupName)
         try {
             const response = await fetch(remoteApi.buildUrl("/monitor/createOrUpdateConsumerMonitor.do"), {
                 method: 'POST',

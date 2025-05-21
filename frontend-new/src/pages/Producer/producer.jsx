@@ -11,14 +11,20 @@ const ProducerConnectionList = () => {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Fetch topic list on component mount
-        remoteApi.queryTopic((resp) => {
-            if (resp.status === 0) {
-                setAllTopicList(resp.data.topicList.sort());
-            } else {
-                message.error(resp.errMsg || "Failed to fetch topic list");
+        const fetchTopicList = async () => {
+            setLoading(true);
+            try {
+                const resp = await remoteApi.queryTopic(true);
+                if (resp.status === 0) {
+                    setAllTopicList(resp.data.topicList.sort());
+                } else {
+                    message.error(resp.errMsg || "Failed to fetch topic list");
+                }
+            } finally {
+                setLoading(false);
             }
-        });
+        };
+        fetchTopicList();
     }, []);
 
     const onFinish = (values) => {
