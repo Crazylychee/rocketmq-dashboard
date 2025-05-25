@@ -22,7 +22,7 @@ import {useLanguage} from '../../i18n/LanguageContext';
 
 const {Option} = Select;
 
-const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess}) => {
+const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, setIsAddConfig, onSuccess}) => {
     const {t} = useLanguage();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
@@ -66,9 +66,10 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                             setConfigData(consumerConfigResponse.data[0]);
                             form.setFieldsValue({
                                 ...consumerConfigResponse.data[0].subscriptionGroupConfig,
-                                brokerName: consumerConfigResponse.data[0].brokerNameList?.[0],
+                                // Set brokerName and clusterName as arrays for multi-select
+                                brokerName: consumerConfigResponse.data[0].brokerNameList,
                                 groupName: consumerConfigResponse.data[0].subscriptionGroupConfig.groupName,
-                                clusterName: consumerConfigResponse.data[0].clusterNameList?.[0]
+                                clusterName: consumerConfigResponse.data[0].clusterNameList
                             });
                         } else {
                             console.error(`Failed to fetch consumer config for group: ${group}`);
@@ -86,12 +87,12 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                             consumeEnable: true,
                             consumeMessageOrderly: false,
                             consumeBroadcastEnable: false,
-                            retryQueueNums: 1, // 确保初始值为数字
-                            retryMaxTimes: 16, // 确保初始值为数字
-                            brokerId: 0, // 确保初始值为数字
-                            whichBrokerWhenConsumeSlowly: 0, // 确保初始值为数字
-                            brokerName: undefined,
-                            clusterName: undefined,
+                            retryQueueNums: 1,
+                            retryMaxTimes: 16,
+                            brokerId: 0,
+                            whichBrokerWhenConsumeSlowly: 0,
+                            brokerName: [], // Initialize as empty array for multi-select
+                            clusterName: [], // Initialize as empty array for multi-select
                         });
                     }
                 } catch (error) {
@@ -111,27 +112,25 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
             const values = await form.validateFields();
             setLoading(true);
 
-            // 确保数字字段是真正的数字类型，而不是字符串
-            // Antd的Form.validateFields()会尝试转换，但明确地转换可以更稳妥
             const numericValues = {
                 retryQueueNums: Number(values.retryQueueNums),
                 retryMaxTimes: Number(values.retryMaxTimes),
                 brokerId: Number(values.brokerId),
                 whichBrokerWhenConsumeSlowly: Number(values.whichBrokerWhenConsumeSlowly),
             };
-            console.log(isAddConfig)
 
             const payload = {
                 subscriptionGroupConfig: {
                     ...(!isAddConfig && configData ? configData.subscriptionGroupConfig : {}),
                     ...values,
-                    ...numericValues, // 合并转换后的数字值
+                    ...numericValues,
                     groupName: isAddConfig ? values.groupName : group,
                 },
-                brokerNameList: [values.brokerName],
-                clusterNameList: isAddConfig ? [values.clusterName] : null
+                // brokerName will be an array from multi-select
+                brokerNameList: values.brokerName,
+                // clusterName will be an array from multi-select, only applicable for add mode
+                clusterNameList: isAddConfig ? values.clusterName : null
             };
-            console.log(payload)
 
             const response = await remoteApi.createOrUpdateConsumer(payload);
             if (response.status === 0) {
@@ -144,13 +143,12 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
             console.error('Validation failed or API call error:', error);
         } finally {
             setLoading(false);
+            setIsAddConfig(false);
         }
     };
 
     // Helper function to parse input value to number
     const parseNumber = (event) => {
-        // 使用 parseFloat 允许小数，但对于整数输入框，可以根据需求使用 parseInt
-        // filter out NaN if user deletes all input
         const value = event.target.value;
         return value === '' ? undefined : Number(value);
     };
@@ -202,7 +200,6 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                         label="Group Name"
                         rules={[{required: true, message: 'Please input the Group Name!'}]}
                     >
-                        {/* groupName在新增模式下可编辑，在更新模式下禁用 */}
                         <Input disabled={!isAddConfig}/>
                     </Form.Item>
 
@@ -211,10 +208,11 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                         <Form.Item
                             name="clusterName"
                             label="Cluster Name"
-                            rules={[{required: true, message: 'Please select a Cluster Name!'}]}
+                            rules={[{required: true, message: 'Please select at least one Cluster Name!'}]}
                         >
                             <Select
-                                placeholder="Select a cluster"
+                                mode="multiple" // Enable multiple selection
+                                placeholder="Select clusters"
                             >
                                 {clusterNames.map((cluster) => (
                                     <Option key={cluster} value={cluster}>
@@ -228,10 +226,11 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                     <Form.Item
                         name="brokerName"
                         label="Broker Name"
-                        rules={[{required: true, message: 'Please select a Broker Name!'}]}
+                        rules={[{required: true, message: 'Please select at least one Broker Name!'}]}
                     >
                         <Select
-                            placeholder="Select a broker"
+                            mode="multiple" // Enable multiple selection
+                            placeholder="Select brokers"
                             disabled={!isAddConfig} // Disable in update mode
                         >
                             {brokerList.map((broker) => (
@@ -261,12 +260,12 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                             rules={[{
                                 type: 'number',
                                 message: 'Please input a number!',
-                                transform: value => Number(value) // 明确进行类型转换
+                                transform: value => Number(value)
                             }, {
-                                required: true, // 确保必填
+                                required: true,
                                 message: 'Please input retry queue numbers!'
                             }]}
-                            getValueFromEvent={parseNumber} // 强制将输入转换为数字或undefined
+                            getValueFromEvent={parseNumber}
                         >
                             <Input type="number"/>
                         </Form.Item>

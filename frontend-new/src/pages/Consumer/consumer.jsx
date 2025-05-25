@@ -457,6 +457,7 @@ const ConsumerGroupList = () => {
                     isAddConfig={isAddConfig}
                     group={selectedGroup}
                     onCancel={() => setShowConfig(false)}
+                    setIsAddConfig={setIsAddConfig}
                     onSuccess={loadConsumerGroups}
                 />
 
