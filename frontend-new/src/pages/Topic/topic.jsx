@@ -46,7 +46,6 @@ const DeployHistoryList = () => {
 
     // Data for dialogs
     const [currentTopicForDialogs, setCurrentTopicForDialogs] = useState('');
-    const [topicModifyData, setTopicModifyData] = useState({});
     const [isUpdateMode, setIsUpdateMode] = useState(false);
     const [resetOffsetResultData, setResetOffsetResultData] = useState(null);
     const [sendResultData, setSendResultData] = useState(null);
@@ -54,6 +53,7 @@ const DeployHistoryList = () => {
     const [allConsumerGroupList, setAllConsumerGroupList] = useState([]);
     const [statsData, setStatsData] = useState(null);
     const [routeData, setRouteData] = useState(null);
+    const [topicModifyData, setTopicModifyData] = useState([]);
     const [sendTopicMessageData, setSendTopicMessageData] = useState({
         topic: '',
         tag: '',
@@ -88,7 +88,7 @@ const DeployHistoryList = () => {
     // Close functions for Modals
     const closeAddUpdateDialog = () => {
         setIsAddUpdateTopicModalVisible(false);
-        setTopicModifyData({});
+        setTopicModifyData([]);
     };
 
     const closeResetOffsetResultDialog = () => {
@@ -221,6 +221,10 @@ const DeployHistoryList = () => {
     };
 
     const openAddUpdateDialog = async (topic, isSys) => {
+        // 确保 topicModifyData 可以存储一个数组，或者单个对象
+        // 如果是更新，我们现在会存储一个数组
+        // 如果是新增，我们仍然存储一个包含默认值的单个对象
+
         setCurrentTopicForDialogs(typeof topic === 'string' ? topic : (topic && topic.name) || '');
         const isUpdate = typeof topic === 'string' && !!topic; // 如果 topic 是非空字符串，则认为是更新
 
@@ -228,25 +232,30 @@ const DeployHistoryList = () => {
         console.log(isUpdate ? "更新" : "新增", topic);
 
         try {
-            if (isUpdate) { // 更新逻辑
-                const topicName = topic; // topic 已经是字符串
-                const configResult = await remoteApi.getTopicConfig(topicName);
+            if (isUpdate) {
+                 // topic 已经是字符串
+                const configResult = await remoteApi.getTopicConfig(topic);
                 if (configResult.status === 0) {
-                    setTopicModifyData({
-                        clusterNameList: configResult.data[0].clusterNameList || [],
-                        brokerNameList: configResult.data[0].brokerNameList || [],
-                        topicName: topicName,
-                        messageType: configResult.data[0].messageType || 'NORMAL',
-                        writeQueueNums: configResult.data[0].writeQueueNums || 8,
-                        readQueueNums: configResult.data[0].readQueueNums || 8,
-                        perm: configResult.data[0].perm || 7,
-                    });
+                    // *** 修改点：如果 configResult.data 是一个数组，直接赋值给 topicModifyData ***
+                    // 否则，将其包装成一个数组
+                    const dataToSet = Array.isArray(configResult.data) ? configResult.data : [configResult.data];
+                    setTopicModifyData(dataToSet.map(item => ({
+                        clusterNameList: [],
+                        brokerNameList: item.brokerNameList || [],
+                        topicName: item.topicName,
+                        messageType: item.messageType || 'NORMAL',
+                        writeQueueNums: item.writeQueueNums || 8,
+                        readQueueNums: item.readQueueNums || 8,
+                        perm: item.perm || 7,
+                        // 添加一个标识，例如 index 或 uniqueId，以便在提交时区分是哪个表单
+                        // 注意：这里我们使用 index 作为简易标识，实际应用中可能需要更健壮的唯一 ID
+                    })));
                 } else {
                     messageApi.error(configResult.errMsg);
                     return;
                 }
             } else { // 新增逻辑 (topic 是 undefined, null, 空字符串或者对象)
-                setTopicModifyData({
+                setTopicModifyData([{ // 新增时，仍然提供一个默认对象在数组中
                     clusterNameList: [],
                     brokerNameList: [],
                     topicName: '',
@@ -254,18 +263,25 @@ const DeployHistoryList = () => {
                     writeQueueNums: 8,
                     readQueueNums: 8,
                     perm: 7,
-                });
+                }]);
             }
         } catch (error) {
             console.error("Error opening add/update dialog:", error);
             messageApi.error("Failed to open dialog");
+            return; // 捕获到错误后，不继续执行后续逻辑
         }
-        const clusterResult = await remoteApi.getClusterList();
-        if (clusterResult.status === 0) {
-            setAllClusterNameList(Object.keys(clusterResult.data.clusterInfo.clusterAddrTable));
-            setAllBrokerNameList(Object.keys(clusterResult.data.brokerServer));
-        } else {
-            messageApi.error(clusterResult.errMsg);
+
+        // 获取集群和 Broker 列表的逻辑不变
+        if(!isUpdate){
+            const clusterResult = await remoteApi.getClusterList();
+            if (clusterResult.status === 0) {
+                setAllClusterNameList(Object.keys(clusterResult.data.clusterInfo.clusterAddrTable));
+                setAllBrokerNameList(Object.keys(clusterResult.data.brokerServer));
+            } else {
+                messageApi.error(clusterResult.errMsg);
+                // 即使获取集群信息失败，也可能需要打开对话框，取决于你的业务逻辑
+                // 如果这里需要阻止对话框打开，可以在这里 return
+            }
         }
         setIsAddUpdateTopicModalVisible(true);
     };
@@ -277,7 +293,9 @@ const DeployHistoryList = () => {
             if (result.status === 0) {
                 messageApi.success(t.TOPIC_OPERATION_SUCCESS);
                 closeAddUpdateDialog();
-                refreshTopicList();
+                if(!isUpdateMode) {
+                    refreshTopicList();
+                }
             } else {
                 messageApi.error(result.errMsg);
             }
@@ -633,7 +651,7 @@ const DeployHistoryList = () => {
 
                 <TopicModifyDialog
                     visible={isAddUpdateTopicModalVisible}
-                    onClose={closeAddUpdateDialog} // 传递关闭函数
+                    onClose={closeAddUpdateDialog}
                     initialData={topicModifyData}
                     bIsUpdate={isUpdateMode}
                     writeOperationEnabled={writeOperationEnabled}

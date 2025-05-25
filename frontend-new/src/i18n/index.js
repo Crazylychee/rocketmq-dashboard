@@ -1,5 +1,8 @@
 export const translations = {
     zh: {
+        "TOPIC_CONFIG": "主题配置",
+        "TOPIC_ADD": "添加主题",
+        "SELECT_CLUSTER_NAME": "请选择集群",
         "FETCH_TOPIC_FAILED": "获取主题列表失败",
         "CONFIRM_DELETE": "确认删除",
         "CANCEL": "取消",
