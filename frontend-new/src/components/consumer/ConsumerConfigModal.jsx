@@ -41,12 +41,18 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                     if (clusterResponse.status === 0 && clusterResponse.data) {
                         const clusterInfo = clusterResponse.data.clusterInfo;
 
-                        // Extract broker names for the default cluster
-                        const defaultClusterBrokers = clusterInfo?.clusterAddrTable?.DefaultCluster || [];
-                        setBrokerList(defaultClusterBrokers);
+                        // Extract all broker names from all clusters
+                        const allBrokers = [];
+                        const allClusterNames = Object.keys(clusterInfo?.clusterAddrTable || {});
+
+                        allClusterNames.forEach(clusterName => {
+                            const brokersInCluster = clusterInfo?.clusterAddrTable?.[clusterName] || [];
+                            allBrokers.push(...brokersInCluster);
+                        });
+
+                        setBrokerList(allBrokers);
 
                         // Extract all cluster names (keys of clusterAddrTable)
-                        const allClusterNames = Object.keys(clusterInfo?.clusterAddrTable || {});
                         setClusterNames(allClusterNames); // Set the array of cluster names
 
                     } else {
@@ -62,10 +68,7 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                                 ...consumerConfigResponse.data[0].subscriptionGroupConfig,
                                 brokerName: consumerConfigResponse.data[0].brokerNameList?.[0],
                                 groupName: consumerConfigResponse.data[0].subscriptionGroupConfig.groupName,
-                                // Assuming clusterName is part of subscriptionGroupConfig or you need to derive it
-                                // For update, we might not need to set clusterName if it's display-only
-                                // If it's editable in update mode, you'll need to fetch it from configData
-                                clusterName: consumerConfigResponse.data[0].clusterNameList?.[0] // Assuming this is how you get it
+                                clusterName: consumerConfigResponse.data[0].clusterNameList?.[0]
                             });
                         } else {
                             console.error(`Failed to fetch consumer config for group: ${group}`);
@@ -83,12 +86,12 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                             consumeEnable: true,
                             consumeMessageOrderly: false,
                             consumeBroadcastEnable: false,
-                            retryQueueNums: 1,
-                            retryMaxTimes: 16,
-                            brokerId: 0,
-                            whichBrokerWhenConsumeSlowly: 0,
-                            brokerName: undefined, // No default broker selected for add
-                            clusterName: undefined, // No default cluster selected for add
+                            retryQueueNums: 1, // 确保初始值为数字
+                            retryMaxTimes: 16, // 确保初始值为数字
+                            brokerId: 0, // 确保初始值为数字
+                            whichBrokerWhenConsumeSlowly: 0, // 确保初始值为数字
+                            brokerName: undefined,
+                            clusterName: undefined,
                         });
                     }
                 } catch (error) {
@@ -108,14 +111,25 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
             const values = await form.validateFields();
             setLoading(true);
 
+            // 确保数字字段是真正的数字类型，而不是字符串
+            // Antd的Form.validateFields()会尝试转换，但明确地转换可以更稳妥
+            const numericValues = {
+                retryQueueNums: Number(values.retryQueueNums),
+                retryMaxTimes: Number(values.retryMaxTimes),
+                brokerId: Number(values.brokerId),
+                whichBrokerWhenConsumeSlowly: Number(values.whichBrokerWhenConsumeSlowly),
+            };
+            console.log(isAddConfig)
+
             const payload = {
                 subscriptionGroupConfig: {
                     ...(!isAddConfig && configData ? configData.subscriptionGroupConfig : {}),
                     ...values,
-                    groupName: values.groupName, // Ensure groupName is always the original 'group' prop
+                    ...numericValues, // 合并转换后的数字值
+                    groupName: isAddConfig ? values.groupName : group,
                 },
                 brokerNameList: [values.brokerName],
-                clusterNameList: [values.clusterName] // Add clusterName to payload
+                clusterNameList: isAddConfig ? [values.clusterName] : null
             };
             console.log(payload)
 
@@ -131,6 +145,14 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
         } finally {
             setLoading(false);
         }
+    };
+
+    // Helper function to parse input value to number
+    const parseNumber = (event) => {
+        // 使用 parseFloat 允许小数，但对于整数输入框，可以根据需求使用 parseInt
+        // filter out NaN if user deletes all input
+        const value = event.target.value;
+        return value === '' ? undefined : Number(value);
     };
 
     return (
@@ -180,6 +202,7 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                         label="Group Name"
                         rules={[{required: true, message: 'Please input the Group Name!'}]}
                     >
+                        {/* groupName在新增模式下可编辑，在更新模式下禁用 */}
                         <Input disabled={!isAddConfig}/>
                     </Form.Item>
 
@@ -232,22 +255,66 @@ const ConsumerConfigModal = ({visible, isAddConfig, group, onCancel, onSuccess})
                     </Form.Item>
 
                     <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-                        <Form.Item name="retryQueueNums" label="Retry Queues" rules={[{type: 'number', message: 'Please input a number!'}]}>
+                        <Form.Item
+                            name="retryQueueNums"
+                            label="Retry Queues"
+                            rules={[{
+                                type: 'number',
+                                message: 'Please input a number!',
+                                transform: value => Number(value) // 明确进行类型转换
+                            }, {
+                                required: true, // 确保必填
+                                message: 'Please input retry queue numbers!'
+                            }]}
+                            getValueFromEvent={parseNumber} // 强制将输入转换为数字或undefined
+                        >
                             <Input type="number"/>
                         </Form.Item>
 
-                        <Form.Item name="retryMaxTimes" label="Max Retries" rules={[{type: 'number', message: 'Please input a number!'}]}>
+                        <Form.Item
+                            name="retryMaxTimes"
+                            label="Max Retries"
+                            rules={[{
+                                type: 'number',
+                                message: 'Please input a number!',
+                                transform: value => Number(value)
+                            }, {
+                                required: true,
+                                message: 'Please input max retries!'
+                            }]}
+                            getValueFromEvent={parseNumber}
+                        >
                             <Input type="number"/>
                         </Form.Item>
 
-                        <Form.Item name="brokerId" label="Broker ID" rules={[{type: 'number', message: 'Please input a number!'}]}>
+                        <Form.Item
+                            name="brokerId"
+                            label="Broker ID"
+                            rules={[{
+                                type: 'number',
+                                message: 'Please input a number!',
+                                transform: value => Number(value)
+                            }, {
+                                required: true,
+                                message: 'Please input a broker ID!'
+                            }]}
+                            getValueFromEvent={parseNumber}
+                        >
                             <Input type="number"/>
                         </Form.Item>
 
                         <Form.Item
                             name="whichBrokerWhenConsumeSlowly"
                             label="Slow Consumption Broker"
-                            rules={[{type: 'number', message: 'Please input a number!'}]}
+                            rules={[{
+                                type: 'number',
+                                message: 'Please input a number!',
+                                transform: value => Number(value)
+                            }, {
+                                required: true,
+                                message: 'Please input slow consumption broker!'
+                            }]}
+                            getValueFromEvent={parseNumber}
                         >
                             <Input type="number"/>
                         </Form.Item>

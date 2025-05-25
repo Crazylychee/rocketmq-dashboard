@@ -57,13 +57,17 @@ const ConsumerGroupList = () => {
         sortOrder: 1,
     });
 
-    const loadConsumerGroups = useCallback(async () => {
+    const loadConsumerGroups = useCallback(async (currentPage) => {
         setLoading(true);
         try {
-            const response = await remoteApi.queryConsumerGroupList(true);
+            const response = await remoteApi.queryConsumerGroupList(false);
             if (response.status === 0) {
                 setAllConsumerGroupList(response.data);
-                filterList(1, response.data);
+                if(currentPage!=null){
+                    filterList(currentPage, response.data);
+                }else{
+                    filterList(1, response.data);
+                }
             } else {
                 messageApi.error({title: t.ERROR, content: response.errMsg});
             }
@@ -238,7 +242,7 @@ const ConsumerGroupList = () => {
         setLoading(false);
         if (response.status === 0) {
             messageApi.success({content: `${group} ${t.REFRESHED}`});
-            loadConsumerGroups();
+            loadConsumerGroups(paginationConf.current);
         } else {
             messageApi.error({title: t.ERROR, content: response.errMsg});
         }
