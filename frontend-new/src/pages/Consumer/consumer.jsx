@@ -380,6 +380,11 @@ const ConsumerGroupList = () => {
         filterList(pagination.current, allConsumerGroupList);
     };
 
+    const closeConfigModal = () =>{
+        setShowConfig(false);
+        setIsAddConfig(false);
+    }
+
     return (
         <>
             {msgContextHolder}
@@ -456,7 +461,7 @@ const ConsumerGroupList = () => {
                     visible={showConfig}
                     isAddConfig={isAddConfig}
                     group={selectedGroup}
-                    onCancel={() => setShowConfig(false)}
+                    onCancel={closeConfigModal}
                     setIsAddConfig={setIsAddConfig}
                     onSuccess={loadConsumerGroups}
                 />
