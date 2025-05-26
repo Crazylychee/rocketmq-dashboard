@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react'; // 引入 useCallback
-import { Modal, Button, Select, Input, Card, Row, Col, notification, Spin } from 'antd'; // 引入 Spin 和 notification
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Select, Input, Card, Row, Col, notification, Spin } from 'antd';
 import { useLanguage } from '../../i18n/LanguageContext';
-import { remoteApi } from "../../api/remoteApi/remoteApi"; // 确保路径正确
+import { remoteApi } from "../../api/remoteApi/remoteApi";
 
 
 const { Option } = Select;
@@ -26,25 +26,22 @@ const { Option } = Select;
 const ProxyManager = () => {
     const { t } = useLanguage();
 
-    const [loading, setLoading] = useState(false); // 加载状态
-    const [proxyAddrList, setProxyAddrList] = useState([]); // proxy 地址列表
-    const [selectedProxy, setSelectedProxy] = useState(''); // 当前选中的 proxy 地址
-    const [newProxyAddr, setNewProxyAddr] = useState(''); // 新增 proxy 地址的输入框值
-    const [allProxyConfig, setAllProxyConfig] = useState({}); // 当前选中 proxy 的配置详情
+    const [loading, setLoading] = useState(false);
+    const [proxyAddrList, setProxyAddrList] = useState([]);
+    const [selectedProxy, setSelectedProxy] = useState('');
+    const [newProxyAddr, setNewProxyAddr] = useState('');
+    const [allProxyConfig, setAllProxyConfig] = useState({});
 
     const [showModal, setShowModal] = useState(false); // 控制 Modal 弹窗显示
     const [writeOperationEnabled, setWriteOperationEnabled] = useState(true); // 写操作权限，默认 true
     const [notificationApi, notificationContextHolder] = notification.useNotification();
-    // 模拟 Angular 的 $window.sessionStorage.getItem("userrole")
-    // 在 React 中，通常在组件挂载时获取一次
+
     useEffect(() => {
         const userRole = sessionStorage.getItem("userrole");
-        // 如果 userRole 为 null 默认为 true，如果 userRole 为 1 也为 true，否则为 false
         const isWriteEnabled = userRole === null || userRole === '1';
         setWriteOperationEnabled(isWriteEnabled);
-    }, []); // 只在组件挂载时执行一次
+    }, []);
 
-    // 首次加载页面时获取 Proxy 首页数据
     useEffect(() => {
         setLoading(true);
         remoteApi.queryProxyHomePage((resp) => {
@@ -54,9 +51,8 @@ const ProxyManager = () => {
                 setProxyAddrList(proxyAddrList || []);
                 setSelectedProxy(currentProxyAddr || (proxyAddrList && proxyAddrList.length > 0 ? proxyAddrList[0] : ''));
 
-                // 首次加载成功后，立即查询当前选中 Proxy 的详细配置
                 if (currentProxyAddr) {
-                    localStorage.setItem('proxyAddr', currentProxyAddr); // 同步 localStorage
+                    localStorage.setItem('proxyAddr', currentProxyAddr);
                 } else if (proxyAddrList && proxyAddrList.length > 0) {
                     localStorage.setItem('proxyAddr', proxyAddrList[0]);
                 }
@@ -65,16 +61,14 @@ const ProxyManager = () => {
                 notificationApi.error({ message: resp.errMsg || t.FETCH_PROXY_LIST_FAILED, duration: 2 });
             }
         });
-    }, [t]); // t 依赖，确保语言切换时effect不重新运行，但首次加载时确保语言上下文已就绪
+    }, [t]);
 
-    // Select 选择器改变时触发的逻辑
     const handleSelectChange = (value) => {
         setSelectedProxy(value);
-        localStorage.setItem('proxyAddr', value); // 更新 localStorage
+        localStorage.setItem('proxyAddr', value);
     };
 
 
-    // "添加" 按钮点击事件
     const handleAddProxyAddr = () => {
         if (!newProxyAddr.trim()) {
             notificationApi.warning({ message: t.INPUT_PROXY_ADDR_REQUIRED || "Please input a new proxy address.", duration: 2 });
@@ -84,11 +78,10 @@ const ProxyManager = () => {
         remoteApi.addProxyAddr(newProxyAddr.trim(), (resp) => {
             setLoading(false);
             if (resp.status === 0) {
-                // 如果列表中不存在，则添加
                 if (!proxyAddrList.includes(newProxyAddr.trim())) {
                     setProxyAddrList(prevList => [...prevList, newProxyAddr.trim()]);
                 }
-                setNewProxyAddr(''); // 清空输入框
+                setNewProxyAddr('');
                 notificationApi.info({ message: t.SUCCESS || "SUCCESS", duration: 2 });
             } else {
                 notificationApi.error({ message: resp.errMsg || t.ADD_PROXY_FAILED, duration: 2 });
@@ -112,9 +105,9 @@ const ProxyManager = () => {
                             <Select
                                 style={{ width: '100%' }}
                                 value={selectedProxy}
-                                onChange={handleSelectChange} // 使用新的处理函数
+                                onChange={handleSelectChange}
                                 placeholder={t.SELECT}
-                                showSearch // 允许搜索
+                                showSearch
                                 filterOption={(input, option) =>
                                     option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
                                 }
@@ -135,7 +128,7 @@ const ProxyManager = () => {
                             </Col>
                             <Col>
                                 <Input
-                                    id="newProxyAddrInput" // 更改 id 避免冲突
+                                    id="newProxyAddrInput"
                                     style={{ width: 300 }}
                                     value={newProxyAddr}
                                     onChange={(e) => setNewProxyAddr(e.target.value)}
@@ -161,14 +154,14 @@ const ProxyManager = () => {
                         </div>
                     }
                     width={800}
-                    bodyStyle={{ maxHeight: '60vh', overflowY: 'auto' }} // 限制高度，自动滚动
+                    bodyStyle={{ maxHeight: '60vh', overflowY: 'auto' }}
                 >
-                    <table className="table table-bordered" style={{ width: '100%' }}> {/* 确保表格宽度 */}
+                    <table className="table table-bordered" style={{ width: '100%' }}>
                         <tbody>
                         {Object.entries(allProxyConfig).length > 0 ? (
                             Object.entries(allProxyConfig).map(([key, value]) => (
                                 <tr key={key}>
-                                    <td style={{ fontWeight: 500, width: '30%' }}>{key}</td> {/* 适当调整列宽 */}
+                                    <td style={{ fontWeight: 500, width: '30%' }}>{key}</td>
                                     <td>{value}</td>
                                 </tr>
                             ))

@@ -17,7 +17,7 @@
 
 import React, {useEffect, useState} from 'react';
 import {Button, Form, Input, message, Select, Table} from 'antd';
-import {remoteApi} from '../../api/remoteApi/remoteApi'; // Adjust path if needed
+import {remoteApi} from '../../api/remoteApi/remoteApi';
 
 const {Option} = Select;
 
@@ -130,7 +130,7 @@ const ProducerConnectionList = () => {
                 <Table
                     dataSource={connectionList}
                     columns={columns}
-                    rowKey="clientId" // Assuming clientId is unique
+                    rowKey="clientId"
                     pagination={false}
                     bordered
                 />

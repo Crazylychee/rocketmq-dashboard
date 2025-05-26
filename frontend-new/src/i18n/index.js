@@ -209,6 +209,7 @@ export const translations = {
         "TOPIC_OPERATION_SUCCESS": "Topic操作成功"
     },
     en: {
+        "SKIP_MESSAGE_ACCUMULATE":"Skip Message Accumulate",
         "OPERATION_FAILED": "Operation Failed",
         "FORM_VALIDATION_FAILED": "Form Validation Failed",
         "ADD_CONSUMER": "Add Consumer",
