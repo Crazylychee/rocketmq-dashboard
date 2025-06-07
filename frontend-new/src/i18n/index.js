@@ -17,6 +17,11 @@
 
 export const translations = {
     zh: {
+        "SELECT_TRACE_TOPIC_PLACEHOLDER": "请选择消息轨迹主题",
+        "TRACE_TOPIC_HINT": "消息轨迹主题",
+        "ONLY_RETURN_64_MESSAGES": "仅返回64条消息",
+        "SELECT_TOPIC_PLACEHOLDER": "请选择主题",
+        "MESSAGE_ID_TOPIC_HINT": "消息ID主题",
         "OPERATION_FAILED": "操作失败",
         "FORM_VALIDATION_FAILED": "表单验证失败",
         "CONFIG_FOR_BROKER": "配置代理",
@@ -206,9 +211,21 @@ export const translations = {
         "TOPIC_AND_KEY_REQUIRED": "Topic和Key为必填项",
         "MESSAGE_ID_REQUIRED": "消息ID为必填项",
         "REFRESHING_TOPIC_LIST": "正在刷新Topic列表",
-        "TOPIC_OPERATION_SUCCESS": "Topic操作成功"
+        "TOPIC_OPERATION_SUCCESS": "Topic操作成功",
+        "ARE_YOU_SURE_TO_DELETE": "您确定要删除吗？",
+        "YES": "是",
+        "NOT": "否",
     },
     en: {
+        "NOT": "No",
+        "ARE_YOU_SURE_TO_DELETE": "Are you sure to delete?",
+        "YES": "Yes",
+        "SELECT_TRACE_TOPIC_PLACEHOLDER": "Please select trace topic",
+        "TRACE_TOPIC_HINT": "Trace Topic",
+        "ONLY_RETURN_64_MESSAGES": "Only return 64 messages",
+        "SELECT_TOPIC_PLACEHOLDER": "Please select topic",
+        "MESSAGE_ID_TOPIC_HINT": "Message ID Topic",
+        "TOPIC_ADD": "Add Topic",
         "SKIP_MESSAGE_ACCUMULATE":"Skip Message Accumulate",
         "OPERATION_FAILED": "Operation Failed",
         "FORM_VALIDATION_FAILED": "Form Validation Failed",

@@ -530,10 +530,10 @@ const DeployHistoryList = () => {
                         )}
                         {!sysFlag && writeOperationEnabled && (
                             <Popconfirm
-                                title={`${t.ARE_YOU_SURE_TO_DELETE}?`}
+                                title={`${t.ARE_YOU_SURE_TO_DELETE}`}
                                 onConfirm={() => deleteTopic(topicName)}
                                 okText={t.YES}
-                                cancelText={t.NO}
+                                cancelText={t.NOT}
                             >
                                 <Button type="primary" danger size="small">
                                     {t.DELETE}
