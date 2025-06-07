@@ -16,8 +16,9 @@
  */
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Layout } from 'antd'; // 导入 Layout 组件
+import {BrowserRouter as Router, Navigate, Route, Routes, useLocation} from 'react-router-dom';
+import {Layout} from 'antd';
+import {AnimatePresence, motion} from 'framer-motion'; // 导入 AnimatePresence 和 motion
 import Login from '../pages/Login/login';
 import Ops from '../pages/Ops/ops';
 import Proxy from '../pages/Proxy/proxy';
@@ -31,49 +32,224 @@ import MessageTrace from '../pages/MessageTrace/messagetrace';
 import Acl from '../pages/Acl/acl';
 
 import Navbar from '../components/Navbar';
-import DashboardPage from "../pages/Dashboard/DashboardPage"; // 确保这个路径正确
+import DashboardPage from "../pages/Dashboard/DashboardPage";
 
-const { Header, Content, Footer } = Layout; // 解构出需要的 Layout 子组件
+const {Header, Content} = Layout;
+
+// 定义页面过渡的动画变体
+const pageVariants = {
+    initial: {
+        opacity: 0,
+        x: "-100vw"
+    },
+    in: {
+        opacity: 1,
+        x: 0
+    },
+    out: {
+        opacity: 0,
+        x: "100vw"
+    }
+};
+
+const pageTransition = {
+    type: "tween",
+    ease: "anticipate",
+    duration: 0.2
+};
 
 const AppRouter = () => {
+    const location = useLocation();
+
     return (
-        <Router>
-            {/* 使用 Ant Design 的 Layout 组件包裹整个应用 */}
-            <Layout style={{ minHeight: '100vh' }}> {/* 设置最小高度为视口高度，确保背景色能覆盖整个页面 */}
-                {/* 顶部导航栏，你现有的 Navbar 组件 */}
-                {/* 如果 Navbar 组件内部已经渲染了 Ant Design 的 Header，可以考虑将其移到 Navbar 内部 */}
-                {/* 如果 Navbar 组件只是一个纯粹的 div，那么这里用 Ant Design 的 Header 是为了统一 Ant Design Layout 结构 */}
-                <Header style={{ padding: 0, height: 'auto', lineHeight: 'normal' }}> {/* Header 默认有高度和行高，这里重置以适应 Navbar */}
-                    <Navbar />
-                </Header>
+        <Layout style={{minHeight: '100vh'}}>
+            <Header style={{padding: 0, height: 'auto', lineHeight: 'normal'}}>
+                <Navbar/>
+            </Header>
 
-                {/* 主要内容区域，使用 Content 组件 */}
-                {/* Content 的背景色将由 theme.js 中的 Layout.contentBg 控制 */}
-                <Content style={{ padding: '24px', backgroundColor: '#f9fcfe' }}> {/* 可以根据需要调整内边距 */}
-                    <Routes>
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/" element={<DashboardPage />} />
-                        <Route path="/ops" element={<Ops />} />
-                        <Route path="/proxy" element={<Proxy />} />
-                        <Route path="/cluster" element={<Cluster />} />
-                        <Route path="/topic" element={<Topic />} />
-                        <Route path="/consumer" element={<Consumer />} />
-                        <Route path="/producer" element={<Producer />} />
-                        <Route path="/message" element={<Message />} />
-                        <Route path="/dlqMessage" element={<DlqMessage />} />
-                        <Route path="/messageTrace" element={<MessageTrace />} />
-                        <Route path="/acl" element={<Acl />} />
-                        <Route path="*" element={<Navigate to="/" />} />
+            <Content style={{padding: '24px', backgroundColor: '#f9fcfe'}}>
+                <AnimatePresence mode="wait">
+                    <Routes location={location} key={location.pathname}>
+                        <Route
+                            path="/login"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Login/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <DashboardPage/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/ops"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Ops/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/proxy"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Proxy/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/cluster"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Cluster/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/topic"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Topic/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/consumer"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Consumer/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/producer"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Producer/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/message"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Message/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/dlqMessage"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <DlqMessage/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/messageTrace"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <MessageTrace/>
+                                </motion.div>
+                            }
+                        />
+                        <Route
+                            path="/acl"
+                            element={
+                                <motion.div
+                                    variants={pageVariants}
+                                    initial="initial"
+                                    animate="in"
+                                    exit="out"
+                                    transition={pageTransition}
+                                >
+                                    <Acl/>
+                                </motion.div>
+                            }
+                        />
+                        <Route path="*" element={<Navigate to="/"/>}/>
                     </Routes>
-                </Content>
-
-                {/* 可选：添加页脚 */}
-                {/* <Footer style={{ textAlign: 'center' }}>
-                    你的应用名称 ©2023
-                </Footer> */}
-            </Layout>
-        </Router>
+                </AnimatePresence>
+            </Content>
+        </Layout>
     );
 };
 
-export default AppRouter;
+const AppWrapper = () => (
+    <Router>
+        <AppRouter/>
+    </Router>
+);
+
+export default AppWrapper;
