@@ -33,6 +33,7 @@ import Acl from '../pages/Acl/acl';
 
 import Navbar from '../components/Navbar';
 import DashboardPage from "../pages/Dashboard/DashboardPage";
+import {ThemeProvider} from "../assets/styles/ThemeContext";
 
 const {Header, Content} = Layout;
 
@@ -67,7 +68,7 @@ const AppRouter = () => {
                 <Navbar/>
             </Header>
 
-            <Content style={{padding: '24px', backgroundColor: '#f9fcfe'}}>
+            <Content style={{padding: '24px'}}>
                 <AnimatePresence mode="wait">
                     <Routes location={location} key={location.pathname}>
                         <Route

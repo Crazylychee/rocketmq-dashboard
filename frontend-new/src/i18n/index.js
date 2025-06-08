@@ -215,8 +215,18 @@ export const translations = {
         "ARE_YOU_SURE_TO_DELETE": "您确定要删除吗？",
         "YES": "是",
         "NOT": "否",
+        "BLUE": "蓝色",
+        "GREEN": "绿色",
+        "PINK": "粉色",
+        "DEFAULT": "默认",
+
+
     },
     en: {
+        "DEFAULT": "Default",
+        "BLUE": "Blue",
+        "GREEN": "Green",
+        "PINK": "Pink",
         "NOT": "No",
         "ARE_YOU_SURE_TO_DELETE": "Are you sure to delete?",
         "YES": "Yes",

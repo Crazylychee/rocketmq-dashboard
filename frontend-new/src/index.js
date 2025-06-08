@@ -22,16 +22,21 @@ import App from './App';
 import { App as AntdApp } from 'antd';
 import reportWebVitals from './reportWebVitals';
 import {LanguageProvider} from "./i18n/LanguageContext";
+import {ThemeProvider} from "./assets/styles/ThemeContext";
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
+
     <LanguageProvider>
         <React.StrictMode>
             <AntdApp>
+                <ThemeProvider>
                 <App/>
+                </ThemeProvider>
             </AntdApp>
         </React.StrictMode>
     </LanguageProvider>
+
 );
 
 // If you want to start measuring performance in your app, pass a function

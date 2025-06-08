@@ -17,9 +17,10 @@
 
 import React, { useState } from 'react';
 import { Layout, Menu, Dropdown, Button, Drawer, Grid, Space } from 'antd';
-import { GlobalOutlined, DownOutlined, UserOutlined, MenuOutlined } from '@ant-design/icons';
+import {GlobalOutlined, DownOutlined, UserOutlined, MenuOutlined, BgColorsOutlined} from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useLanguage } from '../i18n/LanguageContext'; // Internationalization Context
+import { useLanguage } from '../i18n/LanguageContext';
+import {useTheme} from "../assets/styles/ThemeContext"; // Internationalization Context
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid; // Used to determine screen breakpoints
@@ -29,6 +30,7 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
     const navigate = useNavigate();
     const { lang, setLang, t } = useLanguage();
     const screens = useBreakpoint(); // Get current screen size breakpoints
+    const { currentThemeName, setCurrentThemeName } = useTheme();
 
     const [drawerVisible, setDrawerVisible] = useState(false); // Controls drawer visibility
 
@@ -59,6 +61,15 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
             <Menu.Item key="logout" onClick={onLogout}>{t.LOGOUT}</Menu.Item>
         </Menu>
     );
+
+    const themeMenu = (
+        <Menu onClick={({ key }) => setCurrentThemeName(key)}>
+            <Menu.Item key="default">{t.BLUE} ({t.DEFAULT})</Menu.Item>
+            <Menu.Item key="pink">{t.PINK}</Menu.Item>
+            <Menu.Item key="green">{t.GREEN}</Menu.Item>
+        </Menu>
+    );
+
 
     // Menu item configuration
     const menuItems = [
@@ -117,6 +128,13 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
             </div>
 
             <Space size={isExtraSmallScreen ? 8 : 16} > {/* Adjust spacing for buttons */}
+                {/* 主题切换按钮 */}
+                <Dropdown overlay={themeMenu}>
+                    <Button icon={<BgColorsOutlined />} size="small">
+                        {!isExtraSmallScreen && `${t.TOPIC}: ${currentThemeName}`}
+                        <DownOutlined />
+                    </Button>
+                </Dropdown>
                 <Dropdown overlay={langMenu}>
                     <Button icon={<GlobalOutlined />} size="small">
                         {!isExtraSmallScreen && t.CHANGE_LANG} {/* Hide text on extra small screens */}

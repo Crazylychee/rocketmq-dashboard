@@ -20,12 +20,14 @@ import AppRouter from './router'; // 你 router/index.jsx 导出的组件
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {ConfigProvider} from "antd";
-import theme from "./assets/styles/theme";
+import {useTheme} from "./assets/styles/ThemeContext";
 
 function App() {
+    const {currentTheme}  = useTheme();
+
     return (
         <>
-            <ConfigProvider theme={theme}>
+            <ConfigProvider theme={currentTheme}>
             <ToastContainer />
             <AppRouter />
             </ConfigProvider>
