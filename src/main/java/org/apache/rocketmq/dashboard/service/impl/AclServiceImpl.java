@@ -15,28 +15,35 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.controller;
+package org.apache.rocketmq.dashboard.service.impl;
 
-import org.apache.rocketmq.dashboard.permisssion.Permission;
 import org.apache.rocketmq.dashboard.service.AclService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.apache.rocketmq.tools.admin.MQAdminExt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
-@Controller
-@RequestMapping("/acl")
-@Permission
-public class AclController {
+@Service
+public class AclServiceImpl implements AclService {
 
-    @Autowired
-    private AclService aclService;
+    private Logger logger = LoggerFactory.getLogger(AclServiceImpl.class);
 
-    @RequestMapping("/index")
-    public String index() {
+    @Resource
+    private MQAdminExt mqAdminExt;
 
-        return "acl/index";
+
+    public Object getAclList(){
+
+        try {
+            return mqAdminExt.getAcl("*", "*");
+        } catch (Exception e) {
+            logger.error("getAclList error", e);
+            return null;
+        }
     }
+
+
 
 }

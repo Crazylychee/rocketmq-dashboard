@@ -15,28 +15,7 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.controller;
+package org.apache.rocketmq.dashboard.service;
 
-import org.apache.rocketmq.dashboard.permisssion.Permission;
-import org.apache.rocketmq.dashboard.service.AclService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import javax.annotation.Resource;
-
-@Controller
-@RequestMapping("/acl")
-@Permission
-public class AclController {
-
-    @Autowired
-    private AclService aclService;
-
-    @RequestMapping("/index")
-    public String index() {
-
-        return "acl/index";
-    }
-
+public interface AclService {
 }

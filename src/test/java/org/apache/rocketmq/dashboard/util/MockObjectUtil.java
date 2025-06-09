@@ -29,13 +29,15 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+
+import org.apache.rocketmq.auth.migration.v1.AclConfig;
+import org.apache.rocketmq.auth.migration.v1.PlainAccessConfig;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.trace.TraceConstants;
 import org.apache.rocketmq.client.trace.TraceType;
-import org.apache.rocketmq.common.AclConfig;
+
 import org.apache.rocketmq.remoting.protocol.DataVersion;
 import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.common.PlainAccessConfig;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.remoting.protocol.admin.ConsumeStats;
 import org.apache.rocketmq.remoting.protocol.admin.OffsetWrapper;
