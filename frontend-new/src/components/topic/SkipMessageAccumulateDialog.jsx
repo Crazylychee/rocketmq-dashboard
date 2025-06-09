@@ -34,8 +34,6 @@ const SkipMessageAccumulateDialog = ({ visible, onClose, topic, allConsumerGroup
             message.error(t.PLEASE_SELECT_GROUP);
             return;
         }
-        console.log(`Skipping message accumulate for topic: ${topic}, groups: ${selectedConsumerGroup}`);
-        // 调用父组件传递的处理函数，并传递选中的消费者组
         handleSkipMessageAccumulate(selectedConsumerGroup);
         onClose();
     };

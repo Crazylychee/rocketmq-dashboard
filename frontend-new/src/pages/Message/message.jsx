@@ -209,7 +209,6 @@ const MessageQueryPage = () => {
     };
 
     const handleResendMessage = async (messageView, consumerGroup) => {
-        console.log(messageView.properties)
         setLoading(true); // Set loading for the main page as well, as the dialog itself can't control it
         let topicToResend = messageView.topic;
         let msgIdToResend = messageView.msgId;

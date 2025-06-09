@@ -24,7 +24,6 @@ const ConsumerResetOffsetDialog = ({ visible, onClose, topic, allConsumerGroupLi
     const [selectedTime, setSelectedTime] = useState(null);
 
     useEffect(() => {
-        console.log("handleResetOffset prop in child:", handleResetOffset);
         if (!visible) {
             setSelectedConsumerGroup([]);
             setSelectedTime(null);

@@ -33,7 +33,6 @@ const TopicSingleModifyForm = ({
 
     useEffect(() => {
         if (initialData) {
-            console.log(`Setting form values for index ${formIndex}:`, initialData);
             form.setFieldsValue(initialData);
         } else {
             form.resetFields();

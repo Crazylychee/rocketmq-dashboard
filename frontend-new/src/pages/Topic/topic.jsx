@@ -241,7 +241,6 @@ const DeployHistoryList = () => {
         const isUpdate = typeof topic === 'string' && !!topic; // 如果 topic 是非空字符串，则认为是更新
 
         setIsUpdateMode(isUpdate);
-        console.log(isUpdate ? "更新" : "新增", topic);
 
         try {
             if (isUpdate) {

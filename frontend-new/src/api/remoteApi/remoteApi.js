@@ -41,7 +41,6 @@ const remoteApi = {
                 credentials: 'include' // 关键改动：允许发送 Cookie
             });
 
-            console.log(response);
 
             // 检查响应是否被重定向，并且最终的 URL 包含了登录页的路径。
             // 这是会话过期或需要认证时后端重定向到登录页的常见模式。
@@ -539,7 +538,6 @@ const remoteApi = {
 
     getTopicConfig: async (topic) => {
         try {
-            console.log(topic)
             const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/examineTopicConfig.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
@@ -851,19 +849,15 @@ const tools = {
     generateBrokerMap: (brokerServer, clusterAddrTable, brokerAddrTable) => {
         const clusterMap = {}; // 最终存储 { clusterName: [brokerInstance1, brokerInstance2, ...] }
 
-        // 遍历集群名到 brokerName 的映射
         Object.entries(clusterAddrTable).forEach(([clusterName, brokerNamesInCluster]) => {
             clusterMap[clusterName] = []; // 初始化当前集群的 broker 列表
 
             brokerNamesInCluster.forEach(brokerName => {
                 // 从 brokerAddrTable 获取当前 brokerName 下的所有 brokerId 及其地址
                 const brokerAddrs = brokerAddrTable[brokerName]?.brokerAddrs; // 确保 brokerAddrs 存在
-                console.log(brokerAddrs)
                 if (brokerAddrs) {
                     Object.entries(brokerAddrs).forEach(([brokerIdStr, address]) => {
                         const brokerId = parseInt(brokerIdStr); // brokerId 是字符串，转为数字
-                        console.log(brokerId)
-                        console.log(brokerName)
                         // 从 brokerServer 获取当前 brokerName 和 brokerId 对应的详细信息
                         const detail = brokerServer[brokerName]?.[brokerIdStr];
 

@@ -45,13 +45,11 @@ const Navbar = ({ username, rmqVersion = true, showAcl = true}) => {
 
     const onLogout = () => {
         remoteApi.logout().then(res => {
-            console.log(res.status)
             if (res.status === 0) {
                 window.sessionStorage.removeItem("username");
                 window.sessionStorage.removeItem("userRole");
                 window.sessionStorage.removeItem("token");
                 window.sessionStorage.removeItem("rmqVersion");
-                console.log(window.sessionStorage.getItem("username"));
                 navigate('/login');
             } else {
                 console.error('Logout failed:', res.message)
