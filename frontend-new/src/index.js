@@ -22,7 +22,8 @@ import App from './App';
 import { App as AntdApp } from 'antd';
 import reportWebVitals from './reportWebVitals';
 import {LanguageProvider} from "./i18n/LanguageContext";
-import {ThemeProvider} from "./assets/styles/ThemeContext";
+import {Provider} from "react-redux";
+import store from './store';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -30,9 +31,9 @@ root.render(
     <LanguageProvider>
         <React.StrictMode>
             <AntdApp>
-                <ThemeProvider>
+                <Provider store={store}>
                 <App/>
-                </ThemeProvider>
+                </Provider>
             </AntdApp>
         </React.StrictMode>
     </LanguageProvider>

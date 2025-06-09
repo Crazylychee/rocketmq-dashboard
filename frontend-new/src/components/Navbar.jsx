@@ -20,12 +20,13 @@ import { Layout, Menu, Dropdown, Button, Drawer, Grid, Space } from 'antd';
 import {GlobalOutlined, DownOutlined, UserOutlined, MenuOutlined, BgColorsOutlined} from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
-import {useTheme} from "../assets/styles/ThemeContext"; // Internationalization Context
+import {useTheme} from "../store/context/ThemeContext";
+import {remoteApi} from "../api/remoteApi/remoteApi"; // Internationalization Context
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid; // Used to determine screen breakpoints
 
-const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) => {
+const Navbar = ({ username, rmqVersion = true, showAcl = true}) => {
     const location = useLocation();
     const navigate = useNavigate();
     const { lang, setLang, t } = useLanguage();
@@ -40,6 +41,24 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
     const handleMenuClick = ({ key }) => {
         navigate(`/${key}`);
         setDrawerVisible(false); // Close drawer after clicking a menu item
+    };
+
+    const onLogout = () => {
+        remoteApi.logout().then(res => {
+            console.log(res.status)
+            if (res.status === 0) {
+                window.sessionStorage.removeItem("username");
+                window.sessionStorage.removeItem("userRole");
+                window.sessionStorage.removeItem("token");
+                window.sessionStorage.removeItem("rmqVersion");
+                console.log(window.sessionStorage.getItem("username"));
+                navigate('/login');
+            } else {
+                console.error('Logout failed:', res.message)
+                navigate('/login');
+            }
+        })
+
     };
 
     const langMenu = (
@@ -128,7 +147,7 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
             </div>
 
             <Space size={isExtraSmallScreen ? 8 : 16} > {/* Adjust spacing for buttons */}
-                {/* 主题切换按钮 */}
+                {/* Theme switch button */}
                 <Dropdown overlay={themeMenu}>
                     <Button icon={<BgColorsOutlined />} size="small">
                         {!isExtraSmallScreen && `${t.TOPIC}: ${currentThemeName}`}
@@ -144,10 +163,12 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
 
                 {username && (
                     <Dropdown overlay={userMenu}>
-                        <Button icon={<UserOutlined />} size="small">
-                            {!isExtraSmallScreen && username}
-                            <DownOutlined />
-                        </Button>
+                        {/* 使用一个可点击的元素作为 Dropdown 的唯一子元素 */}
+                        <a onClick={e => e.preventDefault()} style={{ display: 'flex', alignItems: 'center' }}>
+                            <UserOutlined style={{ marginRight: 8 }} /> {/* 添加一些间距 */}
+                            {username}
+                            <DownOutlined style={{ marginLeft: 8 }} />
+                        </a>
                     </Dropdown>
                 )}
 
@@ -161,17 +182,17 @@ const Navbar = ({ username = '', rmqVersion = true, showAcl = true, onLogout }) 
                 )}
             </Space>
 
-            {/* 修改这里的 Drawer 和 Menu 组件 */}
+            {/* Modify Drawer and Menu components here */}
             <Drawer
-                // 默认的 Drawer 背景色是白色，如果需要修改 Drawer 自身的背景色，则需要额外设置
-                // 或者在 bodyStyle 中设置深色背景，然后让 Menu 覆盖
+                // Default Drawer background color is white. If you need to change the Drawer's own background color, set it additionally
+                // or set a dark background in bodyStyle, then let Menu override it
                 title={t.MENU} // Drawer title
                 placement="left" // Drawer pops out from the left
                 onClose={() => setDrawerVisible(false)}
                 open={drawerVisible}
-                // 如果你想让 Drawer 的背景和 Menu 背景色一致，可以这样设置 bodyStyle
-                // 或者在 theme.js 中设置 components.Drawer.colorBgElevated 等
-                bodyStyle={{ padding: 0, backgroundColor: '#1c324a' }} // 将 Drawer 的 body 背景也设置为深色
+                // If you want the Drawer's background to match the Menu's background color, you can set bodyStyle like this
+                // or set components.Drawer.colorBgElevated in theme.js, etc.
+                bodyStyle={{ padding: 0, backgroundColor: '#1c324a' }} // Set Drawer body background to dark
                 width={200} // Set drawer width
             >
                 <Menu

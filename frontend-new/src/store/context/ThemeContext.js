@@ -14,17 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { themes, defaultTheme } from './theme';
+import { useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { themes, defaultTheme } from '../../assets/styles/theme';
+import { setTheme } from '../actions/themeActions';
 
-const ThemeContext = createContext();
+export const useTheme = () => {
+    // 从 Redux store 中取出 currentThemeName
+    const currentThemeName = useSelector(state => state.theme.currentThemeName);
+    const dispatch = useDispatch();
 
-export const ThemeProvider = ({ children }) => {
-
-    const [currentThemeName, setCurrentThemeName] = useState(() => {
-        console.log('Loading theme from localStorage'+ localStorage.getItem('appTheme'));
-        return localStorage.getItem('appTheme') || 'default';
-    });
 
     const currentTheme = themes[currentThemeName] || defaultTheme;
 
@@ -32,11 +31,9 @@ export const ThemeProvider = ({ children }) => {
         localStorage.setItem('appTheme', currentThemeName);
     }, [currentThemeName]);
 
-    return (
-        <ThemeContext.Provider value={{ currentTheme, currentThemeName, setCurrentThemeName }}>
-            {children}
-        </ThemeContext.Provider>
-    );
+    return {
+        currentTheme,
+        currentThemeName,
+        setCurrentThemeName: (themeName) => dispatch(setTheme(themeName)),
+    };
 };
-
-export const useTheme = () => useContext(ThemeContext);

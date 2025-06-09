@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import React from 'react';
-import {BrowserRouter as Router, Navigate, Route, Routes, useLocation} from 'react-router-dom';
+import React, {useEffect} from 'react';
+import {HashRouter as Router, Navigate, Route, Routes, useLocation, useNavigate} from 'react-router-dom';
 import {Layout} from 'antd';
-import {AnimatePresence, motion} from 'framer-motion'; // 导入 AnimatePresence 和 motion
+import {AnimatePresence, motion} from 'framer-motion';
 import Login from '../pages/Login/login';
 import Ops from '../pages/Ops/ops';
 import Proxy from '../pages/Proxy/proxy';
@@ -33,11 +33,10 @@ import Acl from '../pages/Acl/acl';
 
 import Navbar from '../components/Navbar';
 import DashboardPage from "../pages/Dashboard/DashboardPage";
-import {ThemeProvider} from "../assets/styles/ThemeContext";
+import {remoteApi} from "../api/remoteApi/remoteApi";
 
 const {Header, Content} = Layout;
 
-// 定义页面过渡的动画变体
 const pageVariants = {
     initial: {
         opacity: 0,
@@ -60,12 +59,19 @@ const pageTransition = {
 };
 
 const AppRouter = () => {
+    const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        remoteApi.setRedirectHandler(() => {
+            navigate('/login', { replace: true });
+        });
+    }, [navigate]);
 
     return (
         <Layout style={{minHeight: '100vh'}}>
             <Header style={{padding: 0, height: 'auto', lineHeight: 'normal'}}>
-                <Navbar/>
+                <Navbar username={window.sessionStorage.getItem("username")}/>
             </Header>
 
             <Content style={{padding: '24px'}}>

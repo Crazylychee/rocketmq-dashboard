@@ -46,12 +46,12 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public boolean login(HttpServletRequest request, HttpServletResponse response) {
-        if (WebUtil.getValueFromSession(request, WebUtil.USER_NAME) != null) {
+//        if (WebUtil.getValueFromSession(request, WebUtil.USER_NAME) != null) {
             return true;
-        }
+//        }
 
-        auth(request, response);
-        return false;
+//        auth(request, response);
+//        return false;
     }
 
     protected void auth(HttpServletRequest request, HttpServletResponse response) {

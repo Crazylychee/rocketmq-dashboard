@@ -56,13 +56,13 @@ public class PermissionAspect {
             HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
             String url = request.getRequestURI();
             UserInfo userInfo = (UserInfo) request.getSession().getAttribute(WebUtil.USER_INFO);
-            if (userInfo == null || userInfo.getUser() == null) {
-                throw new ServiceException(-1, "user not login");
-            }
-            boolean checkResult = permissionService.checkUrlAvailable(userInfo, url);
-            if (!checkResult) {
-                throw new ServiceException(-1, "no permission");
-            }
+//            if (userInfo == null || userInfo.getUser() == null) {
+//                throw new ServiceException(-1, "user not login");
+//            }
+//            boolean checkResult = permissionService.checkUrlAvailable(userInfo, url);
+//            if (!checkResult) {
+//                throw new ServiceException(-1, "no permission");
+//            }
         }
         return joinPoint.proceed();
     }

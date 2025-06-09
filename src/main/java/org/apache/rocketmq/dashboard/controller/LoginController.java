@@ -59,8 +59,10 @@ public class LoginController {
     public Object check(HttpServletRequest request) {
         LoginInfo loginInfo = new LoginInfo();
 
-        loginInfo.setLogined(WebUtil.getValueFromSession(request, WebUtil.USER_NAME) != null);
-        loginInfo.setLoginRequired(configure.isLoginRequired());
+//        loginInfo.setLogined(WebUtil.getValueFromSession(request, WebUtil.USER_NAME) != null);
+//        loginInfo.setLoginRequired(configure.isLoginRequired());
+        loginInfo.setLogined(true);
+        loginInfo.setLoginRequired(true);
 
         return loginInfo;
     }

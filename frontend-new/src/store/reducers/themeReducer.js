@@ -15,3 +15,30 @@
  * limitations under the License.
  */
 
+// src/store/reducers/themeReducer.js
+import { SET_THEME } from '../actions/themeActions';
+
+// 从 localStorage 加载初始主题名称
+const getInitialTheme = () => {
+    // console.log('Loading theme from localStorage for Redux:', localStorage.getItem('appTheme'));
+    return localStorage.getItem('appTheme') || 'default';
+};
+
+const initialState = {
+    currentThemeName: getInitialTheme(),
+};
+
+const themeReducer = (state = initialState, action) => {
+    switch (action.type) {
+        case SET_THEME:
+            // 注意：reducer 应该返回新的状态对象，而不是直接修改旧状态
+            return {
+                ...state,
+                currentThemeName: action.payload,
+            };
+        default:
+            return state;
+    }
+};
+
+export default themeReducer;

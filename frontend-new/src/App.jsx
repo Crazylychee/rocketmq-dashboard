@@ -20,7 +20,7 @@ import AppRouter from './router'; // 你 router/index.jsx 导出的组件
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {ConfigProvider} from "antd";
-import {useTheme} from "./assets/styles/ThemeContext";
+import {useTheme} from "./store/context/ThemeContext";
 
 function App() {
     const {currentTheme}  = useTheme();

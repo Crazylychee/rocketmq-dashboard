@@ -14,15 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createStore,combineReducers } from 'redux';
-import themeReducer from './reducers/themeReducer';
 
-// 组合所有的 reducers
-const rootReducer = combineReducers({
-    theme: themeReducer, // theme 状态将通过 state.theme 访问
+export const SET_THEME = 'SET_THEME';
+
+export const setTheme = (themeName) => ({
+    type: SET_THEME,
+    payload: themeName,
 });
-
-// 创建 Redux store
-const store = createStore(rootReducer);
-
-export default store;

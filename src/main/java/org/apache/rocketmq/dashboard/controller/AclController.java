@@ -14,15 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { createStore,combineReducers } from 'redux';
-import themeReducer from './reducers/themeReducer';
 
-// 组合所有的 reducers
-const rootReducer = combineReducers({
-    theme: themeReducer, // theme 状态将通过 state.theme 访问
-});
+package org.apache.rocketmq.dashboard.controller;
 
-// 创建 Redux store
-const store = createStore(rootReducer);
+import org.apache.rocketmq.dashboard.permisssion.Permission;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-export default store;
+@Controller
+@RequestMapping("/acl")
+@Permission
+public class AclController {
+
+    @RequestMapping("/index")
+    public String index() {
+
+        return "acl/index";
+    }
+
+}

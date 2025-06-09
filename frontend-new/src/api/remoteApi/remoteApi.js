@@ -18,12 +18,46 @@ const appConfig = {
     apiBaseUrl: 'http://localhost:8082' // 请替换为你的实际 API Base URL
 };
 
+let _redirectHandler = null;
+
 const remoteApi = {
+
+    setRedirectHandler: (handler) => {
+        _redirectHandler = handler;
+    },
+
     buildUrl: (endpoint) => {
         if (endpoint.charAt(0) === '/') {
             endpoint = endpoint.substring(1);
         }
         return `${appConfig.apiBaseUrl}/${endpoint}`;
+    },
+
+    _fetch: async (url, options) => {
+        try {
+            // 在 options 中添加 credentials: 'include'
+            const response = await fetch(url, {
+                ...options, // 保留原有的 options
+                credentials: 'include' // 关键改动：允许发送 Cookie
+            });
+
+            console.log(response);
+
+            // 检查响应是否被重定向，并且最终的 URL 包含了登录页的路径。
+            // 这是会话过期或需要认证时后端重定向到登录页的常见模式。
+            // 注意：fetch 会自动跟随 GET 请求的 3xx 重定向，所以我们检查的是 response.redirected。
+            if (response.redirected) {
+                if (_redirectHandler) {
+                    _redirectHandler(); // 如果设置了重定向处理函数，则调用它
+                }
+                return { __isRedirectHandled: true };
+            }
+
+            return response;
+        } catch (error) {
+            console.error("Fetch 请求出错:", error);
+            throw error;
+        }
     },
 
     queryTopic: async (skipSysProcess) => {
@@ -33,7 +67,7 @@ const remoteApi = {
                 params.append('skipSysProcess', 'true');
             }
 
-            const response = await fetch(remoteApi.buildUrl(`/topic/list.query?${params.toString()}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/list.query?${params.toString()}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -48,7 +82,7 @@ const remoteApi = {
             params.append('msgId', msgId);
             params.append('topic', topic);
 
-            const response = await fetch(remoteApi.buildUrl(`/messageTrace/viewMessage.query?${params.toString()}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/messageTrace/viewMessage.query?${params.toString()}`));
             const data = await response.json();
             return data
         } catch (error) {
@@ -63,7 +97,7 @@ const remoteApi = {
             params.append('msgId', msgId);
             params.append('traceTopic', traceTopic);
 
-            const response = await fetch(remoteApi.buildUrl(`/messageTrace/viewMessageTraceGraph.query?${params.toString()}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/messageTrace/viewMessageTraceGraph.query?${params.toString()}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -73,7 +107,7 @@ const remoteApi = {
     },
     queryDlqMessageByConsumerGroup: async (consumerGroup, beginTime, endTime, pageNum, pageSize, taskId) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/dlqMessage/queryDlqMessageByConsumerGroup.query"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/dlqMessage/queryDlqMessageByConsumerGroup.query"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -96,7 +130,7 @@ const remoteApi = {
     },
     resendDlqMessage: async (msgId, consumerGroup, topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/message/consumeMessageDirectly.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/message/consumeMessageDirectly.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -116,7 +150,7 @@ const remoteApi = {
     },
     exportDlqMessage: async (msgId, consumerGroup) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/dlqMessage/exportDlqMessage.do?msgId=${msgId}&consumerGroup=${consumerGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/dlqMessage/exportDlqMessage.do?msgId=${msgId}&consumerGroup=${consumerGroup}`));
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -150,7 +184,7 @@ const remoteApi = {
 
     batchResendDlqMessage: async (messages) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/dlqMessage/batchResendDlqMessage.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/dlqMessage/batchResendDlqMessage.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -177,7 +211,7 @@ const remoteApi = {
      */
     queryMessagePageByTopic: async (topic, begin, end, pageNum, pageSize, taskId) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/message/queryMessagePageByTopic.query"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/message/queryMessagePageByTopic.query"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -206,7 +240,7 @@ const remoteApi = {
      */
     queryMessageByTopicAndKey: async (topic, key) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/message/queryMessageByTopicAndKey.query?topic=${topic}&key=${key}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/message/queryMessageByTopicAndKey.query?topic=${topic}&key=${key}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -228,7 +262,7 @@ const remoteApi = {
             const url = remoteApi.buildUrl(
                 `/message/viewMessage.query?msgId=${msgId}&topic=${encodedTopic}`
             );
-            const response = await fetch(url);
+            const response = await remoteApi._fetch(url);
             const data = await response.json();
             return data;
         } catch (error) {
@@ -246,7 +280,7 @@ const remoteApi = {
     resendMessageDirectly: async (msgId, consumerGroup, topic) => {
         topic = encodeURIComponent(topic)
         try {
-            const response = await fetch(remoteApi.buildUrl(`/message/consumeMessageDirectly.do?msgId=${msgId}&consumerGroup=${consumerGroup}&topic=${topic}`), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/message/consumeMessageDirectly.do?msgId=${msgId}&consumerGroup=${consumerGroup}&topic=${topic}`), {
                 method: 'POST',
             });
             const data = await response.json();
@@ -261,7 +295,7 @@ const remoteApi = {
         topic = encodeURIComponent(topic)
         producerGroup = encodeURIComponent(producerGroup)
         try {
-            const response = await fetch(remoteApi.buildUrl(`/producer/producerConnection.query?topic=${topic}&producerGroup=${producerGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/producer/producerConnection.query?topic=${topic}&producerGroup=${producerGroup}`));
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -272,7 +306,7 @@ const remoteApi = {
 
     queryConsumerGroupList: async (skipSysGroup = false) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/groupList.query?skipSysGroup=${skipSysGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/groupList.query?skipSysGroup=${skipSysGroup}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -283,7 +317,7 @@ const remoteApi = {
 
     refreshConsumerGroup: async (consumerGroup) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/group.refresh?consumerGroup=${consumerGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/group.refresh?consumerGroup=${consumerGroup}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -294,7 +328,7 @@ const remoteApi = {
 
     refreshAllConsumerGroup: async () => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/consumer/group.refresh.all"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/consumer/group.refresh.all"));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -305,7 +339,7 @@ const remoteApi = {
 
     queryConsumerMonitorConfig: async (consumeGroupName) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/monitor/consumerMonitorConfigByGroupName.query?consumeGroupName=${consumeGroupName}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/monitor/consumerMonitorConfigByGroupName.query?consumeGroupName=${consumeGroupName}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -317,7 +351,7 @@ const remoteApi = {
     createOrUpdateConsumerMonitor: async (consumeGroupName, minCount, maxDiffTotal) => {
         consumeGroupName = encodeURIComponent(consumeGroupName)
         try {
-            const response = await fetch(remoteApi.buildUrl("/monitor/createOrUpdateConsumerMonitor.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/monitor/createOrUpdateConsumerMonitor.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -334,7 +368,7 @@ const remoteApi = {
 
     fetchBrokerNameList: async (consumerGroup) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/fetchBrokerNameList.query?consumerGroup=${consumerGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/fetchBrokerNameList.query?consumerGroup=${consumerGroup}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -345,7 +379,7 @@ const remoteApi = {
 
     deleteConsumerGroup: async (groupName, brokerNameList) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/consumer/deleteSubGroup.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/consumer/deleteSubGroup.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -362,7 +396,7 @@ const remoteApi = {
 
     queryConsumerConfig: async (consumerGroup) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/examineSubscriptionGroupConfig.query?consumerGroup=${consumerGroup}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/examineSubscriptionGroupConfig.query?consumerGroup=${consumerGroup}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -373,7 +407,7 @@ const remoteApi = {
 
     createOrUpdateConsumer: async (consumerRequest) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/consumer/createOrUpdate.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/consumer/createOrUpdate.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -390,7 +424,7 @@ const remoteApi = {
 
     queryTopicByConsumer: async (consumerGroup, address) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/queryTopicByConsumer.query?consumerGroup=${consumerGroup}&address=${address}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/queryTopicByConsumer.query?consumerGroup=${consumerGroup}&address=${address}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -401,7 +435,7 @@ const remoteApi = {
 
     queryConsumerConnection: async (consumerGroup, address) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/consumerConnection.query?consumerGroup=${consumerGroup}&address=${address}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/consumerConnection.query?consumerGroup=${consumerGroup}&address=${address}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -412,7 +446,7 @@ const remoteApi = {
 
     queryConsumerRunningInfo: async (consumerGroup, clientId, jstack = false) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/consumer/consumerRunningInfo.query?consumerGroup=${consumerGroup}&clientId=${clientId}&jstack=${jstack}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/consumer/consumerRunningInfo.query?consumerGroup=${consumerGroup}&clientId=${clientId}&jstack=${jstack}`));
             const data = await response.json();
             return data;
         } catch (error) {
@@ -422,7 +456,7 @@ const remoteApi = {
     },
     queryTopicList: async () => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/list.queryTopicType"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/topic/list.queryTopicType"));
             return await response.json();
         } catch (error) {
             console.error("Error fetching topic list:", error);
@@ -432,7 +466,7 @@ const remoteApi = {
 
     refreshTopicList: async () => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/refresh"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/topic/refresh"), {
                 method: 'POST'
             });
             const result = await response.json();
@@ -449,7 +483,7 @@ const remoteApi = {
     deleteTopic: async (topic) => {
         try {
             const url = remoteApi.buildUrl(`/topic/deleteTopic.do?topic=${encodeURIComponent(topic)}`);
-            const response = await fetch(url, {
+            const response = await remoteApi._fetch(url, {
                 method: 'POST', // 仍然使用 POST 方法，但参数在 URL 中
                 headers: {
                     'Content-Type': 'application/json', // 可以根据你的后端需求决定是否需要这个 header
@@ -465,7 +499,7 @@ const remoteApi = {
 
     getTopicStats: async (topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/topic/stats.query?topic=${topic}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/stats.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
             console.error("Error fetching topic stats:", error);
@@ -475,7 +509,7 @@ const remoteApi = {
 
     getTopicRoute: async (topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/topic/route.query?topic=${topic}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/route.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
             console.error("Error fetching topic route:", error);
@@ -485,7 +519,7 @@ const remoteApi = {
 
     getTopicConsumers: async (topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/topic/queryConsumerByTopic.query?topic=${topic}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/queryConsumerByTopic.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
             console.error("Error fetching topic consumers:", error);
@@ -495,7 +529,7 @@ const remoteApi = {
 
     getTopicConsumerGroups: async (topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/topic/queryTopicConsumerInfo.query?topic=${topic}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/queryTopicConsumerInfo.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
             console.error("Error fetching consumer groups:", error);
@@ -506,7 +540,7 @@ const remoteApi = {
     getTopicConfig: async (topic) => {
         try {
             console.log(topic)
-            const response = await fetch(remoteApi.buildUrl(`/topic/examineTopicConfig.query?topic=${topic}`));
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/topic/examineTopicConfig.query?topic=${topic}`));
             return await response.json();
         } catch (error) {
             console.error("Error fetching topic config:", error);
@@ -516,7 +550,7 @@ const remoteApi = {
 
     getClusterList: async () => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/cluster/list.query"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/cluster/list.query"));
             return await response.json();
         } catch (error) {
             console.error("Error fetching cluster list:", error);
@@ -526,7 +560,7 @@ const remoteApi = {
 
     createOrUpdateTopic: async (topicData) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/createOrUpdate.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/topic/createOrUpdate.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -542,7 +576,7 @@ const remoteApi = {
 
     resetConsumerOffset: async (data) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/consumer/resetOffset.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/consumer/resetOffset.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -558,7 +592,7 @@ const remoteApi = {
 
     skipMessageAccumulate: async (data) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/consumer/skipAccumulate.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/consumer/skipAccumulate.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -574,7 +608,7 @@ const remoteApi = {
 
     sendTopicMessage: async (messageData) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/sendTopicMessage.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/topic/sendTopicMessage.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -590,7 +624,7 @@ const remoteApi = {
 
     deleteTopicByBroker: async (brokerName, topic) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/topic/deleteTopicByBroker.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/topic/deleteTopicByBroker.do"), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -607,7 +641,7 @@ const remoteApi = {
     // New API methods for Ops page
     queryOpsHomePage: async () => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/ops/homePage.query"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/ops/homePage.query"));
             return await response.json();
         } catch (error) {
             console.error("Error fetching ops home page data:", error);
@@ -617,7 +651,7 @@ const remoteApi = {
 
     updateNameSvrAddr: async (nameSvrAddr) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/ops/updateNameSvrAddr.do?nameSvrAddrList=${encodeURIComponent(nameSvrAddr)}`), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/ops/updateNameSvrAddr.do?nameSvrAddrList=${encodeURIComponent(nameSvrAddr)}`), {
                 method: 'POST',
             });
             return await response.json();
@@ -629,7 +663,7 @@ const remoteApi = {
 
     addNameSvrAddr: async (newNamesrvAddr) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/ops/addNameSvrAddr.do?newNamesrvAddr=${encodeURIComponent(newNamesrvAddr)}`), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/ops/addNameSvrAddr.do?newNamesrvAddr=${encodeURIComponent(newNamesrvAddr)}`), {
                 method: 'POST',
             });
             return await response.json();
@@ -641,7 +675,7 @@ const remoteApi = {
 
     updateIsVIPChannel: async (useVIPChannel) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/ops/updateIsVIPChannel.do?useVIPChannel=${useVIPChannel}`), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/ops/updateIsVIPChannel.do?useVIPChannel=${useVIPChannel}`), {
                 method: 'POST',
             });
             return await response.json();
@@ -653,7 +687,7 @@ const remoteApi = {
 
     updateUseTLS: async (useTLS) => {
         try {
-            const response = await fetch(remoteApi.buildUrl(`/ops/updateUseTLS.do?useTLS=${useTLS}`), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl(`/ops/updateUseTLS.do?useTLS=${useTLS}`), {
                 method: 'POST',
             });
             return await response.json();
@@ -665,7 +699,7 @@ const remoteApi = {
 
     queryClusterList: async (callback) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/cluster/list.query"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/cluster/list.query"));
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -678,7 +712,7 @@ const remoteApi = {
         try {
             const url = new URL(remoteApi.buildUrl('/dashboard/broker.query'));
             url.searchParams.append('date', date);
-            const response = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const response = await remoteApi._fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -697,7 +731,7 @@ const remoteApi = {
             const url = new URL(remoteApi.buildUrl('/dashboard/topic.query'));
             url.searchParams.append('date', date);
             url.searchParams.append('topicName', topicName);
-            const response = await fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const response = await remoteApi._fetch(url.toString(), { signal: AbortSignal.timeout(15000) }); // 15s timeout
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -713,7 +747,7 @@ const remoteApi = {
 
     queryTopicCurrentData: async (callback) => {
         try {
-            const response = await fetch(remoteApi.buildUrl('/dashboard/topicCurrent.query'), { signal: AbortSignal.timeout(15000) }); // 15s timeout
+            const response = await remoteApi._fetch(remoteApi.buildUrl('/dashboard/topicCurrent.query'), { signal: AbortSignal.timeout(15000) }); // 15s timeout
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -731,7 +765,7 @@ const remoteApi = {
         try {
             const url = new URL(remoteApi.buildUrl('/cluster/brokerConfig.query'));
             url.searchParams.append('brokerAddr', brokerAddr);
-            const response = await fetch(url.toString());
+            const response = await remoteApi._fetch(url.toString());
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -745,7 +779,7 @@ const remoteApi = {
      */
     queryProxyHomePage: async (callback) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/proxy/homePage.query"));
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/proxy/homePage.query"));
             const data = await response.json();
             callback(data);
         } catch (error) {
@@ -759,7 +793,7 @@ const remoteApi = {
      */
     addProxyAddr: async (newProxyAddr, callback) => {
         try {
-            const response = await fetch(remoteApi.buildUrl("/proxy/addProxyAddr.do"), {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/proxy/addProxyAddr.do"), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({ newProxyAddr }).toString()
@@ -769,6 +803,44 @@ const remoteApi = {
         } catch (error) {
             console.error("Error adding proxy address:", error);
             callback({ status: 1, errMsg: "Failed to add proxy address" });
+        }
+    },
+    login: async (username, password) => {
+        try {
+            // 1. 拼接查询参数到 URL
+            const params = new URLSearchParams();
+            params.append('username', username);
+            params.append('password', password);
+            const urlWithParams = `${remoteApi.buildUrl("/login/login.do")}?${params.toString()}`;
+
+            // 2. 发送请求，注意 body 可以是空字符串或 null，或者直接省略 body
+            // 这里使用 GET 方法，因为参数在 URL 上
+            const response = await fetch(urlWithParams, {
+                method: 'POST', // 或者 'POST'，取决于你的 API 需求
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded' // 这个 header 可能不再需要，或者需要调整
+                }
+                // body: null // 如果是 GET 请求，通常不需要 body
+            });
+
+            // 3. 处理响应
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("Error logging in:", error);
+            return { status: 1, errMsg: "Failed to log in" };
+        }
+    },
+
+    logout: async () => {
+        try {
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/login/logout.do"),{
+                method: 'POST'
+            });
+            return await response.json()
+        }catch (error) {
+            console.error("Error logging out:", error);
+            return { status: 1, errMsg: "Failed to log out" };
         }
     }
 };

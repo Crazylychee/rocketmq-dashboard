@@ -57,7 +57,7 @@ rocketmq:
     msgTrackTopicName:
     ticketKey: ticket
     # must create userInfo file: ${rocketmq.config.dataPath}/users.properties if the login is required
-    loginRequired: false
+    loginRequired: true
     useTLS: false
     proxyAddr: 127.0.0.1:8080
     proxyAddrs:
