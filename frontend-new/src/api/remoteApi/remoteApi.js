@@ -74,6 +74,87 @@ const remoteApi = {
         }
     },
 
+    listUsers: async (brokerAddress) => {
+        const params = new URLSearchParams();
+        if (brokerAddress) params.append('brokerAddress', brokerAddress);
+        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/listUsers?${params.toString()}`));
+        return await response.json();
+    },
+
+    getUser: async (brokerAddress, username) => {
+        const params = new URLSearchParams();
+        if (brokerAddress) params.append('brokerAddress', brokerAddress);
+        params.append('username', username);
+        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/getUser?${params.toString()}`));
+        return await response.json();
+    },
+
+    createUser: async (brokerAddress, userInfo) => {
+        const response = await remoteApi._fetch(remoteApi.buildUrl('/acl/createUser'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brokerAddress, userInfo })
+        });
+        return await response.json(); // 返回字符串消息
+    },
+
+    updateUser: async (brokerAddress, userInfo) => {
+        const response = await remoteApi._fetch(remoteApi.buildUrl('/acl/updateUser'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brokerAddress, userInfo })
+        });
+        return await response.json();
+    },
+
+    deleteUser: async (brokerAddress, username) => {
+        const params = new URLSearchParams();
+        if (brokerAddress) params.append('brokerAddress', brokerAddress);
+        params.append('username', username);
+        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/deleteUser?${params.toString()}`), {
+            method: 'DELETE'
+        });
+        return await response.json();
+    },
+
+    // --- ACL 权限相关 API ---
+    listAcls: async (brokerAddress, searchParam) => {
+        const params = new URLSearchParams();
+        if (brokerAddress) params.append('brokerAddress', brokerAddress);
+        if (searchParam) params.append('searchParam', searchParam);
+        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/listAcls?${params.toString()}`));
+        return await response.json();
+    },
+
+    createAcl: async (brokerAddress, subject, policies) => {
+        const response = await remoteApi._fetch(remoteApi.buildUrl('/acl/createAcl'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brokerAddress, subject, policies })
+        });
+        return await response.json();
+    },
+
+    updateAcl: async (brokerAddress, subject, policies) => {
+        const response = await remoteApi._fetch(remoteApi.buildUrl('/acl/updateAcl'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brokerAddress, subject, policies })
+        });
+        return await response.json();
+    },
+
+    deleteAcl: async (brokerAddress, subject, resource) => {
+        const params = new URLSearchParams();
+        if (brokerAddress) params.append('brokerAddress', brokerAddress);
+        params.append('subject', subject);
+        if (resource) params.append('resource', resource);
+        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/deleteAcl?${params.toString()}`), {
+            method: 'DELETE'
+        });
+        return await response.json();
+    },
+
 
     queryMessageByMessageId: async (msgId, topic, callback) => {
         try {

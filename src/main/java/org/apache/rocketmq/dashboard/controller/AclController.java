@@ -17,26 +17,93 @@
 
 package org.apache.rocketmq.dashboard.controller;
 
-import org.apache.rocketmq.dashboard.permisssion.Permission;
-import org.apache.rocketmq.dashboard.service.AclService;
+import org.apache.rocketmq.dashboard.model.PolicyRequest;
+import org.apache.rocketmq.dashboard.model.request.UserCreateRequest;
+import org.apache.rocketmq.dashboard.model.request.UserUpdateRequest;
+import org.apache.rocketmq.dashboard.service.impl.AclServiceImpl;
+import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import java.util.List;
 
-@Controller
+@RestController
 @RequestMapping("/acl")
-@Permission
 public class AclController {
 
     @Autowired
-    private AclService aclService;
+    private AclServiceImpl aclService; // 使用具体的实现类
 
-    @RequestMapping("/index")
-    public String index() {
-
-        return "acl/index";
+    @GetMapping("/listUsers")
+    @ResponseBody
+    public List<UserInfo> listUsers(@RequestParam(required = false) String brokerAddress) {
+        return aclService.listUsers(brokerAddress);
     }
+
+    @GetMapping("/listAcls")
+    @ResponseBody
+    public Object listAcls(
+            @RequestParam(required = false) String brokerAddress,
+            @RequestParam(required = false) String searchParam) {
+        return aclService.listAcls(brokerAddress, searchParam);
+    }
+
+    @PostMapping("/createAcl")
+    @ResponseBody
+    public Object createAcl(@RequestBody PolicyRequest request) {
+        aclService.createAcl(request);
+        return true;
+    }
+
+    @GetMapping("/getUser")
+    @ResponseBody
+    public Object getUser(@RequestParam(required = false) String brokerAddress, @RequestParam String username) {
+        return aclService.getUser(brokerAddress, username);
+    }
+
+    @DeleteMapping("/deleteUser")
+    @ResponseBody
+    public Object deleteUser(@RequestParam(required = false) String brokerAddress, @RequestParam String username) {
+        aclService.deleteUser(brokerAddress, username);
+        return true;
+    }
+
+    @RequestMapping(value = "/updateUser", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public Object updateUser(@RequestBody UserUpdateRequest request) {
+        aclService.updateUser(request.getBrokerAddress(), request.getUserInfo());
+        return true;
+    }
+
+    @PostMapping("/createUser")
+    public Object createUser(@RequestBody UserCreateRequest request) {
+        aclService.createUser(request.getBrokerAddress(), request.getUserInfo());
+        return true;
+    }
+
+    @DeleteMapping("/deleteAcl")
+    public Object deleteAcl(
+            @RequestParam(required = false) String brokerAddress,
+            @RequestParam String subject,
+            @RequestParam(required = false) String resource) {
+        aclService.deleteAcl(brokerAddress, subject, resource);
+        return true;
+    }
+
+    @RequestMapping(value = "/updateAcl", method = RequestMethod.POST, produces = "application/json;charset=UTF-8")
+    @ResponseBody
+    public Object updateAcl(@RequestBody PolicyRequest request) {
+        aclService.updateAcl(request);
+        return true;
+    }
+
+
+
+
+
+
+
+
+
 
 }

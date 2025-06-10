@@ -15,28 +15,18 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.interceptor;
+package org.apache.rocketmq.dashboard.model;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import org.apache.rocketmq.dashboard.service.LoginService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpMethod;
-import org.springframework.stereotype.Component;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
+import lombok.Getter;
+import lombok.Setter;
+import java.util.List;
 
-
-@Component
-public class AuthInterceptor implements HandlerInterceptor {
-
-    @Autowired
-    private LoginService loginService;
-
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        return loginService.login(request, response);
-    }
-
+@Setter
+@Getter
+public class Entry {
+    private List<String> resource;
+    private List<String> actions;
+    private List<String> sourceIps;
+    private String decision;
 
 }

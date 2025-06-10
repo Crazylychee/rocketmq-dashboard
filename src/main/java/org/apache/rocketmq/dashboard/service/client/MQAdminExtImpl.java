@@ -850,97 +850,123 @@ public class MQAdminExtImpl implements MQAdminExt {
     }
 
     @Override
-    public void updateColdDataFlowCtrGroupConfig(String s, Properties properties) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, UnsupportedEncodingException, InterruptedException, MQBrokerException {
-
+    public void updateColdDataFlowCtrGroupConfig(String brokerAddr, Properties properties)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
+            UnsupportedEncodingException, InterruptedException, MQBrokerException {
+        MQAdminInstance.threadLocalMQAdminExt().updateColdDataFlowCtrGroupConfig(brokerAddr, properties);
     }
 
     @Override
-    public void removeColdDataFlowCtrGroupConfig(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, UnsupportedEncodingException, InterruptedException, MQBrokerException {
-
+    public void removeColdDataFlowCtrGroupConfig(String brokerAddr, String consumerGroup)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
+            UnsupportedEncodingException, InterruptedException, MQBrokerException {
+        MQAdminInstance.threadLocalMQAdminExt().removeColdDataFlowCtrGroupConfig(brokerAddr, consumerGroup);
     }
 
     @Override
-    public String getColdDataFlowCtrInfo(String s) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, UnsupportedEncodingException, InterruptedException, MQBrokerException {
-        return "";
+    public String getColdDataFlowCtrInfo(String brokerAddr)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
+            UnsupportedEncodingException, InterruptedException, MQBrokerException {
+        return MQAdminInstance.threadLocalMQAdminExt().getColdDataFlowCtrInfo(brokerAddr);
     }
 
     @Override
-    public String setCommitLogReadAheadMode(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, UnsupportedEncodingException, InterruptedException, MQBrokerException {
-        return "";
+    public String setCommitLogReadAheadMode(String brokerAddr, String mode)
+            throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException,
+            InterruptedException, MQBrokerException, UnsupportedEncodingException {
+        return MQAdminInstance.threadLocalMQAdminExt().setCommitLogReadAheadMode(brokerAddr, mode);
     }
 
     @Override
-    public void createUser(String s, String s1, String s2, String s3) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void createUser(String brokerAddr,
+                           UserInfo userInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().createUser(brokerAddr, userInfo);
     }
 
     @Override
-    public void createUser(String s, UserInfo userInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void createUser(String brokerAddr, String username, String password,
+                           String userType) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().createUser(brokerAddr, username, password, userType);
     }
 
     @Override
-    public void updateUser(String s, String s1, String s2, String s3, String s4) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void updateUser(String brokerAddr, String username,
+                           String password, String userType,
+                           String userStatus) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().updateUser(brokerAddr, username, password, userType, userStatus);
     }
 
     @Override
-    public void updateUser(String s, UserInfo userInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void updateUser(String brokerAddr,
+                           UserInfo userInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().updateUser(brokerAddr, userInfo);
     }
 
     @Override
-    public void deleteUser(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void deleteUser(String brokerAddr,
+                           String username) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().deleteUser(brokerAddr, username);
     }
 
     @Override
-    public UserInfo getUser(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-        return null;
+    public UserInfo getUser(String brokerAddr,
+                            String username) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        return MQAdminInstance.threadLocalMQAdminExt().getUser(brokerAddr, username);
     }
 
     @Override
-    public List<UserInfo> listUser(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-        return List.of();
+    public List<UserInfo> listUser(String brokerAddr,
+                                   String filter) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        return MQAdminInstance.threadLocalMQAdminExt().listUser(brokerAddr, filter);
     }
 
     @Override
-    public void createAcl(String s, String s1, List<String> list, List<String> list1, List<String> list2, String s2) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void createAcl(String brokerAddr, String subject, List<String> resources, List<String> actions,
+                          List<String> sourceIps,
+                          String decision) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().createAcl(brokerAddr, subject, resources, actions, sourceIps, decision);
     }
 
     @Override
-    public void createAcl(String s, AclInfo aclInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void createAcl(String brokerAddr,
+                          AclInfo aclInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().createAcl(brokerAddr, aclInfo);
     }
 
     @Override
-    public void updateAcl(String s, String s1, List<String> list, List<String> list1, List<String> list2, String s2) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void updateAcl(String brokerAddr, String subject, List<String> resources, List<String> actions,
+                          List<String> sourceIps,
+                          String decision) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().updateAcl(brokerAddr, subject, resources, actions, sourceIps, decision);
     }
 
     @Override
-    public void updateAcl(String s, AclInfo aclInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void updateAcl(String brokerAddr,
+                          AclInfo aclInfo) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().updateAcl(brokerAddr, aclInfo);
     }
 
     @Override
-    public void deleteAcl(String s, String s1, String s2) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void deleteAcl(String brokerAddr, String subject,
+                          String resource) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().deleteAcl(brokerAddr, subject, resource);
     }
 
     @Override
-    public AclInfo getAcl(String s, String s1) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-        return null;
+    public AclInfo getAcl(String brokerAddr,
+                          String subject) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        return MQAdminInstance.threadLocalMQAdminExt().getAcl(brokerAddr, subject);
     }
 
     @Override
-    public List<AclInfo> listAcl(String s, String s1, String s2) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-        return List.of();
+    public List<AclInfo> listAcl(String brokerAddr, String subjectFilter,
+                                 String resourceFilter) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        return MQAdminInstance.threadLocalMQAdminExt().listAcl(brokerAddr, subjectFilter, resourceFilter);
     }
 
     @Override
-    public void exportPopRecords(String s, long l) throws RemotingConnectException, RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
-
+    public void exportPopRecords(String brokerAddr, long timeout) throws RemotingConnectException,
+            RemotingSendRequestException, RemotingTimeoutException, MQBrokerException, InterruptedException {
+        MQAdminInstance.threadLocalMQAdminExt().exportPopRecords(brokerAddr, timeout);
     }
 }
