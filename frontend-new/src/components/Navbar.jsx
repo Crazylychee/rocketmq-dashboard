@@ -21,7 +21,7 @@ import {GlobalOutlined, DownOutlined, UserOutlined, MenuOutlined, BgColorsOutlin
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../i18n/LanguageContext';
 import {useTheme} from "../store/context/ThemeContext";
-import {remoteApi} from "../api/remoteApi/remoteApi"; // Internationalization Context
+import {remoteApi} from "../api/remoteApi/remoteApi";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid; // Used to determine screen breakpoints

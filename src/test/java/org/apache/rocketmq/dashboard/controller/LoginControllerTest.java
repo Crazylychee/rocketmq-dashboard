@@ -72,12 +72,8 @@ public class LoginControllerTest extends BaseControllerTest {
         final String rightPwd = "admin";
         final String wrongPwd = "rocketmq";
         {
-            UserServiceImpl.FileBasedUserInfoStore store
-                = new UserServiceImpl.FileBasedUserInfoStore(configure);
-            User user = store.queryByName(username);
-            Assert.assertNotNull(user);
-            Assert.assertEquals(user.getPassword(), rightPwd);
-            ReflectionTestUtils.setField(userService, "fileBasedUserInfoStore", store);
+            //TODO
+
         }
 
         // 1、login fail

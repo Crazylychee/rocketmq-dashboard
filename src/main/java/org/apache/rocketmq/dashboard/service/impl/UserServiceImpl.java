@@ -17,103 +17,43 @@
 
 package org.apache.rocketmq.dashboard.service.impl;
 
-import jakarta.validation.constraints.NotNull;
+import org.apache.rocketmq.auth.authentication.enums.UserType;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
-import org.apache.rocketmq.dashboard.exception.ServiceException;
 import org.apache.rocketmq.dashboard.model.User;
+import org.apache.rocketmq.dashboard.service.AclService;
 import org.apache.rocketmq.dashboard.service.UserService;
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.rocketmq.remoting.protocol.body.UserInfo;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import jakarta.annotation.Resource;
 
-import java.io.FileReader;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Service
-public class UserServiceImpl implements UserService, InitializingBean {
+public class UserServiceImpl implements UserService {
     @Resource
     private RMQConfigure configure;
 
-    private FileBasedUserInfoStore fileBasedUserInfoStore;
+    @Autowired
+    private AclService aclService;
+
 
     @Override
     public User queryByName(String name) {
-        return fileBasedUserInfoStore.queryByName(name);
+        UserInfo userInfo = aclService.getUser("",name);
+        if (userInfo == null) {
+            return null;
+        }
+        return new User(userInfo.getUsername(), userInfo.getPassword(), UserType.getByName(userInfo.getUserType()).getCode());
     }
 
     @Override
     public User queryByUsernameAndPassword(String username, String password) {
-        return fileBasedUserInfoStore.queryByUsernameAndPassword(username, password);
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        if (configure.isLoginRequired()) {
-            fileBasedUserInfoStore = new FileBasedUserInfoStore(configure);
-        }
-    }
-
-    public static class FileBasedUserInfoStore extends AbstractFileStore {
-        private static final String FILE_NAME = "users.properties";
-
-        private static Map<String, User> userMap = new ConcurrentHashMap<>();
-
-        public FileBasedUserInfoStore(RMQConfigure configure) {
-            super(configure, FILE_NAME);
-        }
-
-        @Override
-        public void load(InputStream inputStream) {
-            Properties prop = new Properties();
-            try {
-                if (inputStream == null) {
-                    prop.load(new FileReader(filePath));
-                } else {
-                    prop.load(inputStream);
-                }
-            } catch (Exception e) {
-                log.error("load user.properties failed", e);
-                throw new ServiceException(0, String.format("Failed to load loginUserInfo property file: %s", filePath));
-            }
-
-            Map<String, User> loadUserMap = new HashMap<>();
-            String[] arrs;
-            int role;
-            for (String key : prop.stringPropertyNames()) {
-                String v = prop.getProperty(key);
-                if (v == null)
-                    continue;
-                arrs = v.split(",", 2);
-                if (arrs.length == 0) {
-                    continue;
-                } else if (arrs.length == 1) {
-                    role = 0;
-                } else {
-                    role = Integer.parseInt(arrs[1].trim());
-                }
-
-                loadUserMap.put(key, new User(key, arrs[0].trim(), role));
-            }
-
-            userMap.clear();
-            userMap.putAll(loadUserMap);
-        }
-
-        public User queryByName(String name) {
-            return userMap.get(name);
-        }
-
-        public User queryByUsernameAndPassword(@NotNull String username, @NotNull String password) {
-            User user = queryByName(username);
-            if (user != null && password.equals(user.getPassword())) {
-                return user.cloneOne();
-            }
+        User user = queryByName(username);
+        if(user.getPassword() == null || !user.getPassword().equals(password)) {
             return null;
         }
+        configure.setAccessKey(user.getName());
+        configure.setSecretKey(user.getPassword());
+        return user;
     }
+
 }
