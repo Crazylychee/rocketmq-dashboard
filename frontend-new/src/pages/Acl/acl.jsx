@@ -307,7 +307,7 @@ const Acl = () => {
                 }
             ];
 
-            if (!isUpdate) { // This condition seems reversed for update/create based on the current logic.
+            if (isUpdate) { // This condition seems reversed for update/create based on the current logic.
                 result = await remoteApi.updateAcl(null, values.subject, policiesParam);
                 if (result.status === 0) {
                     messageApi.success(t.ACL_UPDATE_SUCCESS);
