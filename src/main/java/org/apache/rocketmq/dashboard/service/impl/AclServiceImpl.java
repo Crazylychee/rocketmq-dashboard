@@ -69,10 +69,7 @@ public class AclServiceImpl implements AclService {
         try {
             String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
             User user = new User("rocketmq32","1234567",1);
-            userList = myRocketMQAdminService.executeAdminOperation(user, mqAdminExt -> {
-                logger.info("回调内部：正在为用户 {} 获取所有 Topic 列表。", user.getName());
-                return mqAdminExt.listUser(address, "");
-            });
+            userList = myRocketMQAdminService.executeAdminOperation(user, mqAdminExt -> mqAdminExt.listUser(address, ""));
         } catch (Exception ex) {
             logger.error("Failed to list users from broker: {}", brokerAddress, ex);
             throw new RuntimeException("Failed to list users", ex);
