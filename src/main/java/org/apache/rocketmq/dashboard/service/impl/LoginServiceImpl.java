@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.dashboard.service.impl;
 
+import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.Resource;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -52,14 +52,13 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public boolean login(HttpServletRequest request, HttpServletResponse response) {
-//        String username = (String) WebUtil.getValueFromSession(request, WebUtil.USER_NAME);
-        String username = "rocketmq32";
+        String username = (String) WebUtil.getValueFromSession(request, WebUtil.USER_NAME);
         if (username != null) {
             UserInfo userInfo = userInfoProvider.getUserInfoByUsername(username);
-            if(userInfo == null){
+            if (userInfo == null) {
                 return false;
             }
-            UserInfoContext.set(WebUtil.USER_NAME,userInfo);
+            UserInfoContext.set(WebUtil.USER_NAME, userInfo);
             return true;
         }
         auth(request, response);

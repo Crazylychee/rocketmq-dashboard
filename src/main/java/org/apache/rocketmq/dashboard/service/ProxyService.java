@@ -16,8 +16,6 @@
  */
 package org.apache.rocketmq.dashboard.service;
 
-import org.apache.rocketmq.client.exception.MQBrokerException;
-
 import java.util.Map;
 
 public interface ProxyService {

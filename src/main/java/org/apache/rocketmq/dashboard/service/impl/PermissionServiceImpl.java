@@ -17,11 +17,6 @@
 package org.apache.rocketmq.dashboard.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import java.io.FileReader;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import jakarta.annotation.Resource;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.exception.ServiceException;
@@ -31,6 +26,12 @@ import org.apache.rocketmq.dashboard.util.MatcherUtil;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
+
+import java.io.FileReader;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.rocketmq.dashboard.permisssion.UserRoleEnum.ADMIN;
 import static org.apache.rocketmq.dashboard.permisssion.UserRoleEnum.ORDINARY;

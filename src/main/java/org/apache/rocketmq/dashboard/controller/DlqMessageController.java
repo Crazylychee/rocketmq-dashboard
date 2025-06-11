@@ -17,10 +17,7 @@
 package org.apache.rocketmq.dashboard.controller;
 
 import com.google.common.collect.Lists;
-import java.util.ArrayList;
-import java.util.List;
 import jakarta.annotation.Resource;
-
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.common.MixAll;
@@ -41,6 +38,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Controller
 @RequestMapping("/dlqMessage")

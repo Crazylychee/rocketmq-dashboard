@@ -18,9 +18,8 @@
 package org.apache.rocketmq.dashboard.service;
 
 
-import org.apache.rocketmq.dashboard.controller.AclController;
 import org.apache.rocketmq.dashboard.model.PolicyRequest;
-import org.apache.rocketmq.dashboard.service.impl.AclServiceImpl;
+import org.apache.rocketmq.dashboard.model.request.UserInfoParam;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 
 import java.util.List;
@@ -34,9 +33,9 @@ public interface AclService {
 
     void deleteUser(String brokerAddress, String username);
 
-    void updateUser(String brokerAddress, AclServiceImpl.UserInfoParam userParam);
+    void updateUser(String brokerAddress, UserInfoParam userParam);
 
-    void createUser(String brokerAddress, AclServiceImpl.UserInfoParam userParam);
+    void createUser(String brokerAddress, UserInfoParam userParam);
 
     void deleteAcl(String brokerAddress, String subject, String resource);
 

@@ -22,6 +22,7 @@ import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.model.Entry;
 import org.apache.rocketmq.dashboard.model.Policy;
 import org.apache.rocketmq.dashboard.model.PolicyRequest;
+import org.apache.rocketmq.dashboard.model.request.UserInfoParam;
 import org.apache.rocketmq.dashboard.service.AclService;
 import org.apache.rocketmq.dashboard.service.ClusterInfoService;
 import org.apache.rocketmq.remoting.protocol.body.AclInfo;
@@ -38,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-public class AclServiceImpl implements AclService{
+public class AclServiceImpl implements AclService {
 
     private Logger logger = LoggerFactory.getLogger(AclServiceImpl.class);
 
@@ -52,13 +53,11 @@ public class AclServiceImpl implements AclService{
     @Autowired
     private ClusterInfoService clusterInfoService;
 
-    private static final String DEFAULT_BROKER_ADDRESS = "localhost:10911"; // 默认Broker地址，可以考虑从配置中读取
+    private static final String DEFAULT_BROKER_ADDRESS = "localhost:10911";
 
     @Override
     public List<UserInfo> listUsers(String brokerAddress) {
         List<UserInfo> userList;
-        System.out.println(rmqConfigure.getSecretKey());
-        System.out.println(rmqConfigure.getAccessKey());
         try {
             String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
             userList = mqAdminExt.listUser(address, "");
@@ -251,7 +250,7 @@ public class AclServiceImpl implements AclService{
 
                             entryInfo.setActions(entry.getActions());
                             entryInfo.setDecision(entry.getDecision());
-                            entryInfo.setResource(resource); // 每次只设置一个 resource
+                            entryInfo.setResource(resource);
                             entryInfo.setSourceIps(entry.getSourceIps());
                             entries.add(entryInfo);
 
@@ -276,113 +275,5 @@ public class AclServiceImpl implements AclService{
         }
 
     }
-
-    // --- 定义用于接收前端参数的 DTOs ---
-
-    // 用于接收 UserInfo 参数的 DTO
-    public static class UserInfoParam {
-        private String username;
-        private String password;
-        private String userStatus;
-        private String userType;
-
-        // Getters and Setters
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPassword() {
-            return password;
-        }
-
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        public String getUserStatus() {
-            return userStatus;
-        }
-
-        public void setUserStatus(String userStatus) {
-            this.userStatus = userStatus;
-        }
-
-        public String getUserType() {
-            return userType;
-        }
-
-        public void setUserType(String userType) {
-            this.userType = userType;
-        }
-    }
-
-    // 用于接收 PolicyInfo 参数的 DTO
-    public static class PolicyInfoParam {
-        private String policyType;
-        private List<PolicyEntryInfoParam> entryParams;
-
-        // Getters and Setters
-        public String getPolicyType() {
-            return policyType;
-        }
-
-        public void setPolicyType(String policyType) {
-            this.policyType = policyType;
-        }
-
-        public List<PolicyEntryInfoParam> getEntryParams() {
-            return entryParams;
-        }
-
-        public void setEntryParams(List<PolicyEntryInfoParam> entryParams) {
-            this.entryParams = entryParams;
-        }
-    }
-
-    // 用于接收 PolicyEntryInfo 参数的 DTO
-    public static class PolicyEntryInfoParam {
-        private List<String> actions;
-        private String decision;
-        private String resource;
-        private List<String> sourceIps;
-
-        // Getters and Setters
-        public List<String> getActions() {
-            return actions;
-        }
-
-        public void setActions(List<String> actions) {
-            this.actions = actions;
-        }
-
-        public String getDecision() {
-            return decision;
-        }
-
-        public void setDecision(String decision) {
-            this.decision = decision;
-        }
-
-        public String getResource() {
-            return resource;
-        }
-
-        public void setResource(String resource) {
-            this.resource = resource;
-        }
-
-        public List<String> getSourceIps() {
-            return sourceIps;
-        }
-
-        public void setSourceIps(List<String> sourceIps) {
-            this.sourceIps = sourceIps;
-        }
-    }
-
 
 }

@@ -16,7 +16,6 @@
  */
 package org.apache.rocketmq.dashboard.service.client;
 
-import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.remoting.RemotingClient;

@@ -15,18 +15,14 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.service;
+package org.apache.rocketmq.dashboard.model.request;
 
-import org.apache.rocketmq.dashboard.model.DlqMessageRequest;
-import org.apache.rocketmq.dashboard.model.DlqMessageResendResult;
-import org.apache.rocketmq.dashboard.model.MessagePage;
-import org.apache.rocketmq.dashboard.model.request.MessageQuery;
+import lombok.Data;
 
-import java.util.List;
-
-public interface DlqMessageService {
-
-    MessagePage queryDlqMessageByPage(MessageQuery query);
-
-    List<DlqMessageResendResult> batchResendDlqMessage(List<DlqMessageRequest> dlqMessages);
+@Data
+public class UserInfoParam {
+    private String username;
+    private String password;
+    private String userStatus;
+    private String userType;
 }

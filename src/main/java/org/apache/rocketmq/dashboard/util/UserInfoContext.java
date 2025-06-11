@@ -22,39 +22,26 @@ import java.util.Map;
 
 public class UserInfoContext {
 
-    private static final ThreadLocal<Map<String, Object>> userThreadLocal = ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<String, Object>> USER_THREAD_LOCAL = ThreadLocal.withInitial(HashMap::new);
 
-    /**
-     * 设置用户信息
-     * @param key 用户信息的键
-     * @param value 用户信息的值
-     */
+
     public static void set(String key, Object value) {
-        userThreadLocal.get().put(key, value);
+        USER_THREAD_LOCAL.get().put(key, value);
     }
 
-    /**
-     * 获取用户信息
-     * @param key 用户信息的键
-     * @return 用户信息的值
-     */
+
     public static Object get(String key) {
-        return userThreadLocal.get().get(key);
+        return USER_THREAD_LOCAL.get().get(key);
     }
 
-    /**
-     * 获取所有用户信息
-     * @return 包含所有用户信息的Map
-     */
+
     public static Map<String, Object> getAll() {
-        return new HashMap<>(userThreadLocal.get());
+        return new HashMap<>(USER_THREAD_LOCAL.get());
     }
 
-    /**
-     * 清除当前线程的用户信息
-     */
+
     public static void clear() {
-        userThreadLocal.remove();
+        USER_THREAD_LOCAL.remove();
     }
 
 }

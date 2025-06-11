@@ -23,7 +23,15 @@ import org.apache.rocketmq.dashboard.model.request.UserUpdateRequest;
 import org.apache.rocketmq.dashboard.service.impl.AclServiceImpl;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -32,7 +40,7 @@ import java.util.List;
 public class AclController {
 
     @Autowired
-    private AclServiceImpl aclService; // 使用具体的实现类
+    private AclServiceImpl aclService;
 
     @GetMapping("/listUsers")
     @ResponseBody
@@ -90,14 +98,6 @@ public class AclController {
         aclService.updateAcl(request);
         return true;
     }
-
-
-
-
-
-
-
-
 
 
 }

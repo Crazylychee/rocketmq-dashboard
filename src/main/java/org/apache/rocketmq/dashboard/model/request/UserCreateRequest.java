@@ -19,11 +19,10 @@ package org.apache.rocketmq.dashboard.model.request;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.rocketmq.dashboard.service.impl.AclServiceImpl;
 
 @Setter
 @Getter
 public class UserCreateRequest {
     private String brokerAddress;
-    private AclServiceImpl.UserInfoParam userInfo;
+    private UserInfoParam userInfo;
 }

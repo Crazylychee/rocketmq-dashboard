@@ -34,6 +34,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
 import java.util.Set;
+
 @Aspect
 @Component
 @Slf4j
@@ -49,6 +50,7 @@ public class MQAdminAspect {
     private RMQConfigure rmqConfigure;
 
     private static final Set<String> METHODS_TO_CHECK = new HashSet<>();
+
     static {
         METHODS_TO_CHECK.add("getUser");
         METHODS_TO_CHECK.add("examineBrokerClusterInfo");
@@ -59,7 +61,11 @@ public class MQAdminAspect {
     public void mQAdminMethodPointCut() {
     }
 
-    @Around(value = "mQAdminMethodPointCut()")
+    @Pointcut("execution(* org.apache.rocketmq.dashboard.service.client.ProxyAdminImpl..*(..))")
+    public void proxyAdminMethodPointCut() {
+    }
+
+    @Around(value = "mQAdminMethodPointCut()||proxyAdminMethodPointCut()")
     public Object aroundMQAdminMethod(ProceedingJoinPoint joinPoint) throws Throwable {
         long start = System.currentTimeMillis();
         MQAdminExt mqAdminExt = null; // The MQAdminExt instance borrowed from the pool
@@ -86,8 +92,10 @@ public class MQAdminAspect {
 
         } catch (Exception e) {
             log.error("Error during MQAdminExt operation for user {}: Method={}, Error={}",
-                    (currentUserInfo != null ? currentUserInfo.getUsername() : "N/A"),
-                    methodName, e.getMessage(), e);
+                    currentUserInfo != null ? currentUserInfo.getUsername() : "N/A",
+                    methodName,
+                    e.getMessage(),
+                    e);
             throw e;
         } finally {
 
@@ -118,12 +126,9 @@ public class MQAdminAspect {
     private boolean isPoolConfigIsolatedByUser(boolean loginRequired, String methodName) {
         if (!loginRequired) {
             return false;
-        }else{
-            if(METHODS_TO_CHECK.contains(methodName)){
-                return false;
-            }
+        } else {
+            return !METHODS_TO_CHECK.contains(methodName);
         }
-        return true;
     }
 
 

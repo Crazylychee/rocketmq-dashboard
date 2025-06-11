@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class UserInfoProviderImpl implements UserInfoProvider {
 
-    private static final Logger logger = LoggerFactory.getLogger(UserInfoProviderImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(UserInfoProviderImpl.class);
 
     @Autowired
     private MQAdminExt mqAdminExt;
@@ -43,7 +43,7 @@ public class UserInfoProviderImpl implements UserInfoProvider {
         ClusterInfo clusterInfo = clusterInfoService.get();
 
         if (clusterInfo == null || clusterInfo.getBrokerAddrTable() == null || clusterInfo.getBrokerAddrTable().isEmpty()) {
-            logger.warn("Cluster information is not available or has no broker addresses.");
+            log.warn("Cluster information is not available or has no broker addresses.");
             return null;
         }
         for (BrokerData brokerLiveInfo : clusterInfo.getBrokerAddrTable().values()) {
@@ -60,7 +60,7 @@ public class UserInfoProviderImpl implements UserInfoProvider {
                     return userInfo;
                 }
             } catch (Exception e) {
-                logger.warn("Failed to get user {} from broker {}. Trying next broker if available. Error: {}", username, brokerAddr, e.getMessage());
+                log.warn("Failed to get user {} from broker {}. Trying next broker if available. Error: {}", username, brokerAddr, e.getMessage());
             }
         }
         return null;

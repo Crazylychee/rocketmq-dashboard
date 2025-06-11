@@ -21,11 +21,5 @@ import org.apache.rocketmq.tools.admin.MQAdminExt;
 
 @FunctionalInterface
 public interface MQAdminExtCallback<T> {
-    /**
-     * 在这里执行您需要对 MQAdminExt 实例进行的操作。
-     * @param mqAdminExt 可用的 MQAdminExt 实例。
-     * @return 操作结果。
-     * @throws Exception 如果操作过程中发生错误。
-     */
     T doInMQAdminExt(MQAdminExt mqAdminExt) throws Exception;
 }

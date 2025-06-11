@@ -19,7 +19,6 @@ package org.apache.rocketmq.dashboard.permisssion;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
-import org.apache.rocketmq.dashboard.exception.ServiceException;
 import org.apache.rocketmq.dashboard.model.UserInfo;
 import org.apache.rocketmq.dashboard.service.PermissionService;
 import org.apache.rocketmq.dashboard.util.WebUtil;
