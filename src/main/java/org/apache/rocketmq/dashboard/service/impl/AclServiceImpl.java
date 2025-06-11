@@ -18,16 +18,13 @@
 package org.apache.rocketmq.dashboard.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.annotation.Resource;
-import org.apache.rocketmq.dashboard.admin.MyRocketMQAdminService;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.model.Entry;
 import org.apache.rocketmq.dashboard.model.Policy;
 import org.apache.rocketmq.dashboard.model.PolicyRequest;
-import org.apache.rocketmq.dashboard.model.User;
 import org.apache.rocketmq.dashboard.service.AclService;
+import org.apache.rocketmq.dashboard.service.ClusterInfoService;
 import org.apache.rocketmq.remoting.protocol.body.AclInfo;
-import org.apache.rocketmq.remoting.protocol.body.TopicList;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
 import org.slf4j.Logger;
@@ -35,19 +32,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @Service
-public class AclServiceImpl implements AclService {
+public class AclServiceImpl implements AclService{
 
     private Logger logger = LoggerFactory.getLogger(AclServiceImpl.class);
 
-    @Autowired
-    private MyRocketMQAdminService myRocketMQAdminService;
 
     @Autowired
     private MQAdminExt mqAdminExt;
@@ -55,11 +49,10 @@ public class AclServiceImpl implements AclService {
     @Autowired
     private RMQConfigure rmqConfigure;
 
-    // ClusterInfoService 暂时没有在你的代码中使用，如果需要，请自行导入和使用
-    // @Autowired
-    // private ClusterInfoService clusterInfoService;
+    @Autowired
+    private ClusterInfoService clusterInfoService;
 
-    private static final String DEFAULT_BROKER_ADDRESS = "127.0.0.1:10911"; // 默认Broker地址，可以考虑从配置中读取
+    private static final String DEFAULT_BROKER_ADDRESS = "localhost:10911"; // 默认Broker地址，可以考虑从配置中读取
 
     @Override
     public List<UserInfo> listUsers(String brokerAddress) {
@@ -68,8 +61,7 @@ public class AclServiceImpl implements AclService {
         System.out.println(rmqConfigure.getAccessKey());
         try {
             String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
-            User user = new User("rocketmq32","1234567",1);
-            userList = myRocketMQAdminService.executeAdminOperation(user, mqAdminExt -> mqAdminExt.listUser(address, ""));
+            userList = mqAdminExt.listUser(address, "");
         } catch (Exception ex) {
             logger.error("Failed to list users from broker: {}", brokerAddress, ex);
             throw new RuntimeException("Failed to list users", ex);
@@ -88,11 +80,11 @@ public class AclServiceImpl implements AclService {
             String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
             String user = searchParam != null ? searchParam : "";
             String res = searchParam != null ? searchParam : "";
-            aclList =  mqAdminExt.listAcl(address, user, "");
-            if(aclList == null) {
+            aclList = mqAdminExt.listAcl(address, user, "");
+            if (aclList == null) {
                 aclList = new ArrayList<>();
             }
-            List<AclInfo> resAclList =  mqAdminExt.listAcl(address, "", res);
+            List<AclInfo> resAclList = mqAdminExt.listAcl(address, "", res);
             if (resAclList != null) {
                 aclList.addAll(resAclList);
             }
@@ -173,17 +165,6 @@ public class AclServiceImpl implements AclService {
             }
         }
         return successfulResources;
-    }
-
-    @Override
-    public UserInfo getUser(String brokerAddress, String username) {
-        try {
-            String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
-            return mqAdminExt.getUser(address, username);
-        } catch (Exception ex) {
-            logger.error("Failed to get user: {} from broker: {}", username, brokerAddress, ex);
-            throw new RuntimeException("Failed to get user", ex);
-        }
     }
 
     @Override
@@ -306,14 +287,37 @@ public class AclServiceImpl implements AclService {
         private String userType;
 
         // Getters and Setters
-        public String getUsername() { return username; }
-        public void setUsername(String username) { this.username = username; }
-        public String getPassword() { return password; }
-        public void setPassword(String password) { this.password = password; }
-        public String getUserStatus() { return userStatus; }
-        public void setUserStatus(String userStatus) { this.userStatus = userStatus; }
-        public String getUserType() { return userType; }
-        public void setUserType(String userType) { this.userType = userType; }
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getUserStatus() {
+            return userStatus;
+        }
+
+        public void setUserStatus(String userStatus) {
+            this.userStatus = userStatus;
+        }
+
+        public String getUserType() {
+            return userType;
+        }
+
+        public void setUserType(String userType) {
+            this.userType = userType;
+        }
     }
 
     // 用于接收 PolicyInfo 参数的 DTO
@@ -322,10 +326,21 @@ public class AclServiceImpl implements AclService {
         private List<PolicyEntryInfoParam> entryParams;
 
         // Getters and Setters
-        public String getPolicyType() { return policyType; }
-        public void setPolicyType(String policyType) { this.policyType = policyType; }
-        public List<PolicyEntryInfoParam> getEntryParams() { return entryParams; }
-        public void setEntryParams(List<PolicyEntryInfoParam> entryParams) { this.entryParams = entryParams; }
+        public String getPolicyType() {
+            return policyType;
+        }
+
+        public void setPolicyType(String policyType) {
+            this.policyType = policyType;
+        }
+
+        public List<PolicyEntryInfoParam> getEntryParams() {
+            return entryParams;
+        }
+
+        public void setEntryParams(List<PolicyEntryInfoParam> entryParams) {
+            this.entryParams = entryParams;
+        }
     }
 
     // 用于接收 PolicyEntryInfo 参数的 DTO
@@ -336,14 +351,37 @@ public class AclServiceImpl implements AclService {
         private List<String> sourceIps;
 
         // Getters and Setters
-        public List<String> getActions() { return actions; }
-        public void setActions(List<String> actions) { this.actions = actions; }
-        public String getDecision() { return decision; }
-        public void setDecision(String decision) { this.decision = decision; }
-        public String getResource() { return resource; }
-        public void setResource(String resource) { this.resource = resource; }
-        public List<String> getSourceIps() { return sourceIps; }
-        public void setSourceIps(List<String> sourceIps) { this.sourceIps = sourceIps; }
+        public List<String> getActions() {
+            return actions;
+        }
+
+        public void setActions(List<String> actions) {
+            this.actions = actions;
+        }
+
+        public String getDecision() {
+            return decision;
+        }
+
+        public void setDecision(String decision) {
+            this.decision = decision;
+        }
+
+        public String getResource() {
+            return resource;
+        }
+
+        public void setResource(String resource) {
+            this.resource = resource;
+        }
+
+        public List<String> getSourceIps() {
+            return sourceIps;
+        }
+
+        public void setSourceIps(List<String> sourceIps) {
+            this.sourceIps = sourceIps;
+        }
     }
 
 

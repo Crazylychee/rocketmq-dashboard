@@ -81,14 +81,6 @@ const remoteApi = {
         return await response.json();
     },
 
-    getUser: async (brokerAddress, username) => {
-        const params = new URLSearchParams();
-        if (brokerAddress) params.append('brokerAddress', brokerAddress);
-        params.append('username', username);
-        const response = await remoteApi._fetch(remoteApi.buildUrl(`/acl/getUser?${params.toString()}`));
-        return await response.json();
-    },
-
     createUser: async (brokerAddress, userInfo) => {
         const response = await remoteApi._fetch(remoteApi.buildUrl('/acl/createUser'), {
             method: 'POST',

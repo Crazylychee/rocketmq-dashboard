@@ -22,7 +22,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.service.LoginService;
 import org.apache.rocketmq.dashboard.service.UserService;
+import org.apache.rocketmq.dashboard.service.provider.UserInfoProvider;
+import org.apache.rocketmq.dashboard.util.UserInfoContext;
 import org.apache.rocketmq.dashboard.util.WebUtil;
+import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,15 +46,24 @@ public class LoginServiceImpl implements LoginService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserInfoProvider userInfoProvider;
+
 
     @Override
     public boolean login(HttpServletRequest request, HttpServletResponse response) {
-//        if (WebUtil.getValueFromSession(request, WebUtil.USER_NAME) != null) {
+//        String username = (String) WebUtil.getValueFromSession(request, WebUtil.USER_NAME);
+        String username = "rocketmq32";
+        if (username != null) {
+            UserInfo userInfo = userInfoProvider.getUserInfoByUsername(username);
+            if(userInfo == null){
+                return false;
+            }
+            UserInfoContext.set(WebUtil.USER_NAME,userInfo);
             return true;
-//        }
-
-//        auth(request, response);
-//        return false;
+        }
+        auth(request, response);
+        return false;
     }
 
     protected void auth(HttpServletRequest request, HttpServletResponse response) {

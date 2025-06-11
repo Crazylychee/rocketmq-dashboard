@@ -24,6 +24,7 @@ import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.model.User;
 import org.apache.rocketmq.dashboard.service.AclService;
 import org.apache.rocketmq.dashboard.service.UserService;
+import org.apache.rocketmq.dashboard.service.provider.UserInfoProvider;
 import org.apache.rocketmq.logging.org.slf4j.Logger;
 import org.apache.rocketmq.logging.org.slf4j.LoggerFactory;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
@@ -41,7 +42,7 @@ public class UserServiceImpl implements UserService {
     private RMQConfigure configure;
 
     @Autowired
-    private AclService aclService;
+    private UserInfoProvider userInfoProvider;
 
     @Autowired
     private UserMQAdminPoolManager userMQAdminPoolManager;
@@ -49,7 +50,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User queryByName(String name) {
-        UserInfo userInfo = aclService.getUser("",name);
+        UserInfo userInfo = userInfoProvider.getUserInfoByUsername(name);
         if (userInfo == null) {
             return null;
         }
@@ -59,7 +60,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public User queryByUsernameAndPassword(String username, String password) {
         User user = queryByName(username);
-        if(user.getPassword() == null || !user.getPassword().equals(password)) {
+        if(user != null && !user.getPassword().equals(password)) {
             return null;
         }
 

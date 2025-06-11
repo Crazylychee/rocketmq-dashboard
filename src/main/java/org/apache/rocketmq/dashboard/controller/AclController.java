@@ -55,12 +55,6 @@ public class AclController {
         return true;
     }
 
-    @GetMapping("/getUser")
-    @ResponseBody
-    public Object getUser(@RequestParam(required = false) String brokerAddress, @RequestParam String username) {
-        return aclService.getUser(brokerAddress, username);
-    }
-
     @DeleteMapping("/deleteUser")
     @ResponseBody
     public Object deleteUser(@RequestParam(required = false) String brokerAddress, @RequestParam String username) {
