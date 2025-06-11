@@ -66,6 +66,8 @@ public class RMQConfigure {
 
     private List<String> proxyAddrs = new ArrayList<>();
 
+    private Integer clientCallbackExecutorThreads = 4; // 默认值
+
     public String getAccessKey() {
         return accessKey;
     }
@@ -92,6 +94,14 @@ public class RMQConfigure {
 
     public List<String> getProxyAddrs() {
         return this.proxyAddrs;
+    }
+
+    public Integer getClientCallbackExecutorThreads() {
+        return clientCallbackExecutorThreads;
+    }
+
+    public void setClientCallbackExecutorThreads(Integer clientCallbackExecutorThreads) {
+        this.clientCallbackExecutorThreads = clientCallbackExecutorThreads;
     }
 
     public void setProxyAddrs(List<String> proxyAddrs) {

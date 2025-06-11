@@ -17,8 +17,11 @@
 package org.apache.rocketmq.dashboard.service;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.dashboard.admin.MyRocketMQAdminService;
+import org.apache.rocketmq.dashboard.model.User;
 import org.apache.rocketmq.remoting.protocol.body.ClusterInfo;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -33,8 +36,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Service
 public class ClusterInfoService {
 
-    @Resource
-    private MQAdminExt mqAdminExt;
+    @Autowired
+    private MyRocketMQAdminService myRocketMQAdminService;
 
     @Value("${rocketmq.cluster.cache.expire:60000}")
     private long cacheExpireMs;
@@ -56,8 +59,9 @@ public class ClusterInfoService {
     }
 
     public synchronized ClusterInfo refresh() {
+        User user = new User("rocketmq32", "1234567", 1);
         try {
-            ClusterInfo fresh = mqAdminExt.examineBrokerClusterInfo();
+            ClusterInfo fresh = myRocketMQAdminService.executeAdminOperation(user, MQAdminExt::examineBrokerClusterInfo);
             cachedRef.set(fresh);
             return fresh;
         } catch (Exception e) {

@@ -14,13 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.rocketmq.dashboard.service;
 
-import org.apache.rocketmq.dashboard.model.User;
+package org.apache.rocketmq.dashboard.admin;
 
-public interface UserService {
-    User queryByName(String name);
+import org.apache.rocketmq.tools.admin.MQAdminExt;
 
-    User queryByUsernameAndPassword(String username, String password);
-
+@FunctionalInterface
+public interface MQAdminExtCallback<T> {
+    /**
+     * 在这里执行您需要对 MQAdminExt 实例进行的操作。
+     * @param mqAdminExt 可用的 MQAdminExt 实例。
+     * @return 操作结果。
+     * @throws Exception 如果操作过程中发生错误。
+     */
+    T doInMQAdminExt(MQAdminExt mqAdminExt) throws Exception;
 }

@@ -19,15 +19,20 @@ package org.apache.rocketmq.dashboard.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.Resource;
+import org.apache.rocketmq.dashboard.admin.MyRocketMQAdminService;
+import org.apache.rocketmq.dashboard.config.RMQConfigure;
 import org.apache.rocketmq.dashboard.model.Entry;
 import org.apache.rocketmq.dashboard.model.Policy;
 import org.apache.rocketmq.dashboard.model.PolicyRequest;
+import org.apache.rocketmq.dashboard.model.User;
 import org.apache.rocketmq.dashboard.service.AclService;
 import org.apache.rocketmq.remoting.protocol.body.AclInfo;
+import org.apache.rocketmq.remoting.protocol.body.TopicList;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
@@ -41,21 +46,33 @@ public class AclServiceImpl implements AclService {
 
     private Logger logger = LoggerFactory.getLogger(AclServiceImpl.class);
 
-    @Resource
+    @Autowired
+    private MyRocketMQAdminService myRocketMQAdminService;
+
+    @Autowired
     private MQAdminExt mqAdminExt;
+
+    @Autowired
+    private RMQConfigure rmqConfigure;
 
     // ClusterInfoService 暂时没有在你的代码中使用，如果需要，请自行导入和使用
     // @Autowired
     // private ClusterInfoService clusterInfoService;
 
-    private static final String DEFAULT_BROKER_ADDRESS = "172.27.96.1:10911"; // 默认Broker地址，可以考虑从配置中读取
+    private static final String DEFAULT_BROKER_ADDRESS = "127.0.0.1:10911"; // 默认Broker地址，可以考虑从配置中读取
 
     @Override
     public List<UserInfo> listUsers(String brokerAddress) {
         List<UserInfo> userList;
+        System.out.println(rmqConfigure.getSecretKey());
+        System.out.println(rmqConfigure.getAccessKey());
         try {
             String address = brokerAddress != null && !brokerAddress.isEmpty() ? brokerAddress : DEFAULT_BROKER_ADDRESS;
-            userList = mqAdminExt.listUser(address, "");
+            User user = new User("rocketmq32","1234567",1);
+            userList = myRocketMQAdminService.executeAdminOperation(user, mqAdminExt -> {
+                logger.info("回调内部：正在为用户 {} 获取所有 Topic 列表。", user.getName());
+                return mqAdminExt.listUser(address, "");
+            });
         } catch (Exception ex) {
             logger.error("Failed to list users from broker: {}", brokerAddress, ex);
             throw new RuntimeException("Failed to list users", ex);
