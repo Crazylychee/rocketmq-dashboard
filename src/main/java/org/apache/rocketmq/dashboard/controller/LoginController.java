@@ -67,12 +67,11 @@ public class LoginController {
 
     @RequestMapping(value = "/login.do", method = RequestMethod.POST)
     @ResponseBody
-    public Object login(@RequestParam("username") String username,
-        @RequestParam(value = "password") String password,
-        HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        logger.info("user:{} login", username);
-        User user = userService.queryByUsernameAndPassword(username, password);
+    public Object login(org.apache.rocketmq.remoting.protocol.body.UserInfo userInfoRequest,
+                        HttpServletRequest request,
+                        HttpServletResponse response) throws Exception {
+        logger.info("user:{} login", userInfoRequest.getUsername());
+        User user = userService.queryByUsernameAndPassword(userInfoRequest.getUsername(), userInfoRequest.getPassword());
 
         if (user == null) {
             throw new IllegalArgumentException("Bad username or password!");
@@ -80,9 +79,9 @@ public class LoginController {
             user.setPassword(null);
             UserInfo userInfo = WebUtil.setLoginInfo(request, response, user);
             WebUtil.setSessionValue(request, WebUtil.USER_INFO, userInfo);
-            WebUtil.setSessionValue(request, WebUtil.USER_NAME, username);
+            WebUtil.setSessionValue(request, WebUtil.USER_NAME, userInfoRequest.getUsername());
             userInfo.setSessionId(WebUtil.getSessionId(request));
-            LoginResult result = new LoginResult(username, user.getType(), contextPath);
+            LoginResult result = new LoginResult(userInfoRequest.getUsername(), user.getType(), contextPath);
             return result;
         }
     }

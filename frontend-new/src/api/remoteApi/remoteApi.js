@@ -878,20 +878,19 @@ const remoteApi = {
     },
     login: async (username, password) => {
         try {
-            // 1. 拼接查询参数到 URL
-            const params = new URLSearchParams();
-            params.append('username', username);
-            params.append('password', password);
-            const urlWithParams = `${remoteApi.buildUrl("/login/login.do")}?${params.toString()}`;
+
 
             // 2. 发送请求，注意 body 可以是空字符串或 null，或者直接省略 body
             // 这里使用 GET 方法，因为参数在 URL 上
-            const response = await fetch(urlWithParams, {
-                method: 'POST', // 或者 'POST'，取决于你的 API 需求
+            const response = await remoteApi._fetch(remoteApi.buildUrl("/login/login.do"), {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded' // 这个 header 可能不再需要，或者需要调整
-                }
-                // body: null // 如果是 GET 请求，通常不需要 body
+                },
+                body: new URLSearchParams({
+                    username: username, // 假设 username 是变量名
+                    password: password  // 假设 password 是变量名
+                }).toString()
             });
 
             // 3. 处理响应
