@@ -392,7 +392,7 @@ const Acl = () => {
             dataIndex: 'userStatus',
             key: 'userStatus',
             render: (status) => (
-                <Tag color={status === t.ENABLED ? 'green' : 'red'}>{status}</Tag>
+                <Tag color={status=== 'enable' ? 'red' : 'green'}>{status}</Tag>
             ),
         },
         {
