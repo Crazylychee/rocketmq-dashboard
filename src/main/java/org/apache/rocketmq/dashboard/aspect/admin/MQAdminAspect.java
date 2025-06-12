@@ -54,6 +54,9 @@ public class MQAdminAspect {
     static {
         METHODS_TO_CHECK.add("getUser");
         METHODS_TO_CHECK.add("examineBrokerClusterInfo");
+        METHODS_TO_CHECK.add("examineConsumerConnectionInfo");
+        METHODS_TO_CHECK.add("examineConsumeStats");
+        METHODS_TO_CHECK.add("examineProducerConnectionInfo");
     }
 
     // Pointcut remains the same, targeting methods in MQAdminExtImpl
@@ -90,13 +93,6 @@ public class MQAdminAspect {
             // 4. Proceed with the original method execution.
             return joinPoint.proceed();
 
-        } catch (Exception e) {
-            log.error("Error during MQAdminExt operation for user {}: Method={}, Error={}",
-                    currentUserInfo != null ? currentUserInfo.getUsername() : "N/A",
-                    methodName,
-                    e.getMessage(),
-                    e);
-            throw e;
         } finally {
 
             if (currentUserInfo != null) {
