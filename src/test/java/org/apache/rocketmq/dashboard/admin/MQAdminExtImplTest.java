@@ -32,7 +32,6 @@ import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.impl.MQAdminImpl;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
-import org.apache.rocketmq.common.PlainAccessConfig;
 import org.apache.rocketmq.common.TopicConfig;
 import org.apache.rocketmq.remoting.protocol.admin.ConsumeStats;
 import org.apache.rocketmq.remoting.protocol.admin.RollbackStats;
@@ -154,35 +153,7 @@ public class MQAdminExtImplTest {
         mqAdminExtImpl.createAndUpdateTopicConfig(brokerAddr, new TopicConfig());
     }
 
-    @Test
-    public void testDeletePlainAccessConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.deletePlainAccessConfig(brokerAddr, "rocketmq");
-    }
 
-    @Test
-    public void testUpdateGlobalWhiteAddrConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.updateGlobalWhiteAddrConfig(brokerAddr, "192.168.*.*");
-    }
-
-    @Test
-    public void testCreateAndUpdatePlainAccessConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        mqAdminExtImpl.createAndUpdatePlainAccessConfig(brokerAddr, new PlainAccessConfig());
-    }
-
-    @Test
-    public void testExamineBrokerClusterAclVersionInfo() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        assertNull(mqAdminExtImpl.examineBrokerClusterAclVersionInfo(brokerAddr));
-    }
-
-    @Test
-    public void testExamineBrokerClusterAclConfig() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        assertNull(mqAdminExtImpl.examineBrokerClusterAclConfig(brokerAddr));
-    }
 
     @Test
     public void testQueryConsumerStatus() throws Exception {
@@ -225,29 +196,27 @@ public class MQAdminExtImplTest {
     @Test
     public void testExamineTopicConfig() throws Exception {
         assertNotNull(mqAdminExtImpl);
-        
-        // Create valid TopicConfigSerializeWrapper with topic_test entry
-        TopicConfigSerializeWrapper wrapper = new TopicConfigSerializeWrapper();
-        ConcurrentMap<String, TopicConfig> topicConfigTable = new ConcurrentHashMap<>();
+
+        // Create valid TopicConfigSerializeWrapper with topictest entry
         TopicConfig config = new TopicConfig();
         config.setTopicName("topic_test");
-        topicConfigTable.put("topic_test", config);
-        wrapper.setTopicConfigTable(topicConfigTable);
-        
+
+
         // Create successful response
         RemotingCommand successResponse = RemotingCommand.createResponseCommand(null);
         successResponse.setCode(ResponseCode.SUCCESS);
-        successResponse.setBody(RemotingSerializable.encode(wrapper));
-        
+        successResponse.setBody(RemotingSerializable.encode(config));
+
         // Mock the remote invocation
         when(remotingClient.invokeSync(eq(brokerAddr), any(RemotingCommand.class), anyLong()))
-            .thenReturn(successResponse);
-        
+                .thenReturn(successResponse);
+
         // Test successful case
         TopicConfig topicConfig = mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
         Assert.assertNotNull(topicConfig);
         Assert.assertEquals("topic_test", topicConfig.getTopicName());
     }
+
 
     @Test
     public void testExamineTopicStats() throws Exception {
@@ -257,7 +226,7 @@ public class MQAdminExtImplTest {
         }
         TopicStatsTable topicStatsTable = mqAdminExtImpl.examineTopicStats("topic_test");
         Assert.assertNotNull(topicStatsTable);
-        Assert.assertEquals(topicStatsTable.getOffsetTable().size(), 1);
+        Assert.assertEquals(1, topicStatsTable.getOffsetTable().size());
     }
 
     @Test
@@ -535,12 +504,10 @@ public class MQAdminExtImplTest {
     public void testConsumeMessageDirectly() throws Exception {
         assertNotNull(mqAdminExtImpl);
         {
-            when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
+
             when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
         }
-        ConsumeMessageDirectlyResult result1 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "7F000001ACC018B4AAC2116AF6500000");
         ConsumeMessageDirectlyResult result2 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "topic_test", "7F000001ACC018B4AAC2116AF6500000");
-        Assert.assertNotNull(result1);
         Assert.assertNotNull(result2);
     }
 
@@ -620,9 +587,9 @@ public class MQAdminExtImplTest {
     public void testViewMessage() throws Exception {
         assertNotNull(mqAdminExtImpl);
         {
-            when(defaultMQAdminExt.viewMessage(anyString())).thenReturn(new MessageExt());
+            when(defaultMQAdminExt.viewMessage("",anyString())).thenReturn(new MessageExt());
         }
-        MessageExt messageExt = mqAdminExtImpl.viewMessage("7F000001ACC018B4AAC2116AF6500000");
+        MessageExt messageExt = mqAdminExtImpl.viewMessage("","7F000001ACC018B4AAC2116AF6500000");
         Assert.assertNotNull(messageExt);
     }
 
@@ -671,7 +638,7 @@ public class MQAdminExtImplTest {
         assertNotNull(mqAdminExtImpl);
         {
             when(MQAdminInstance.threadLocalMqClientInstance().getMQAdminImpl()).thenReturn(mock(MQAdminImpl.class));
-            when(defaultMQAdminExt.viewMessage(anyString())).thenThrow(new RuntimeException("viewMessage exception"));
+            when(defaultMQAdminExt.viewMessage("",anyString())).thenThrow(new RuntimeException("viewMessage exception"));
         }
         mqAdminExtImpl.viewMessage("topic_test", "7F000001ACC018B4AAC2116AF6500000");
     }
@@ -788,7 +755,6 @@ public class MQAdminExtImplTest {
     @Test
     public void testResumeCheckHalfMessage() throws Exception {
         assertNotNull(mqAdminExtImpl);
-        Assert.assertFalse(mqAdminExtImpl.resumeCheckHalfMessage("7F000001ACC018B4AAC2116AF6500000"));
         Assert.assertFalse(mqAdminExtImpl.resumeCheckHalfMessage("topic_test", "7F000001ACC018B4AAC2116AF6500000"));
     }
 

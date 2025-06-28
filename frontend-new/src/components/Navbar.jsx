@@ -102,7 +102,7 @@ const Navbar = ({ rmqVersion = true, showAcl = true}) => {
         { key: 'message', label: t.MESSAGE },
         { key: 'dlqMessage', label: t.DLQ_MESSAGE },
         { key: 'messageTrace', label: t.MESSAGETRACE },
-        ...(showAcl ? [{ key: 'acl', label: t.WHITE_LIST }] : []),
+        ...(showAcl ? [{ key: 'acl', label: t.ACL_MANAGEMENT }] : []),
     ];
 
     // Determine if it's a small screen (e.g., less than md)
