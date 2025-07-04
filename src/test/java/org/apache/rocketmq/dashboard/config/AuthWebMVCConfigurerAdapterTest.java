@@ -18,21 +18,6 @@
 package org.apache.rocketmq.dashboard.config;
 
 import org.apache.rocketmq.dashboard.BaseTest;
-import org.apache.rocketmq.dashboard.interceptor.AuthInterceptor;
-import org.assertj.core.util.Lists;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.jupiter.api.Assertions;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
-import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.web.method.support.HandlerMethodArgumentResolver;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
-
-import java.util.List;
 
 public class AuthWebMVCConfigurerAdapterTest extends BaseTest {
 

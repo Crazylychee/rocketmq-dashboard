@@ -50,7 +50,7 @@ rocketmq:
     # timeout for mqadminExt, default 5000ms
     timeoutMillis:
     # rocketmq-console's data path:dashboard/monitor
-    dataPath: /tmp/rocketmq-console/data
+    dataPath: A:\tmp\rocketmq-console\data
     # set it false if you don't want use dashboard.default true
     enableDashBoardCollect: false
     # set the message track trace topic if you don't want use the default one
@@ -58,6 +58,12 @@ rocketmq:
     ticketKey: ticket
     # must create userInfo file: ${rocketmq.config.dataPath}/users.properties if the login is required
     loginRequired: true
+    # Authentication mode for RocketMQ Dashboard
+    # Available options:
+    #   - 'file': Use username/password stored in a file (requires 'auth.file.path')
+    #   - 'acl':  Use credentials from ACL system (requires 'acl.access.key' and 'acl.secret.key')
+    # Default: file
+    authMode: file
     useTLS: false
     proxyAddr: 127.0.0.1:8080
     proxyAddrs:

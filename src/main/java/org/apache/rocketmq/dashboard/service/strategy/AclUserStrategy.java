@@ -15,27 +15,27 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.service.provider;
+package org.apache.rocketmq.dashboard.service.strategy;
+
+import lombok.AllArgsConstructor;
 import org.apache.rocketmq.dashboard.service.ClusterInfoService;
 import org.apache.rocketmq.remoting.protocol.body.ClusterInfo;
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 import org.apache.rocketmq.remoting.protocol.route.BrokerData;
 import org.apache.rocketmq.tools.admin.MQAdminExt;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
 @Service
-public class UserInfoProviderImpl implements UserInfoProvider {
+@AllArgsConstructor
+public class AclUserStrategy implements UserStrategy {
 
-    private static final Logger log = LoggerFactory.getLogger(UserInfoProviderImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(AclUserStrategy.class);
 
-    @Autowired
-    private MQAdminExt mqAdminExt;
+    private final MQAdminExt mqAdminExt;
 
-    @Autowired
-    private ClusterInfoService clusterInfoService;
+    private final ClusterInfoService clusterInfoService;
 
     @Override
     public UserInfo getUserInfoByUsername(String username) {

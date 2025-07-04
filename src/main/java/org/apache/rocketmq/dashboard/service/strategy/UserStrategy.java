@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-package org.apache.rocketmq.dashboard.service.provider;
+package org.apache.rocketmq.dashboard.service.strategy;
 
 import org.apache.rocketmq.remoting.protocol.body.UserInfo;
 
-public interface UserInfoProvider {
+public interface UserStrategy {
     UserInfo getUserInfoByUsername(String username);
 }

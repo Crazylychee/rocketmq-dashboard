@@ -15,32 +15,16 @@
  * limitations under the License.
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-    Table,
-    Button,
-    Input,
-    Tabs,
-    Modal,
-    Form,
-    message,
-    Space,
-    Tag,
-    Popconfirm,
-    Select
-} from 'antd';
-import {
-    EditOutlined,
-    DeleteOutlined,
-    EyeOutlined,
-    EyeInvisibleOutlined
-} from '@ant-design/icons';
+import React, {useEffect, useState} from 'react';
+import {Button, Form, Input, message, Modal, Popconfirm, Select, Space, Table, Tabs, Tag} from 'antd';
+import {DeleteOutlined, EditOutlined, EyeInvisibleOutlined, EyeOutlined} from '@ant-design/icons';
 import {remoteApi} from "../../api/remoteApi/remoteApi";
 import ResourceInput from '../../components/acl/ResourceInput';
 import SubjectInput from "../../components/acl/SubjectInput";
 import {useLanguage} from "../../i18n/LanguageContext";
-const { TabPane } = Tabs;
-const { Search } = Input;
+
+const {TabPane} = Tabs;
+const {Search} = Input;
 
 const Acl = () => {
     const [activeTab, setActiveTab] = useState('users');
@@ -88,12 +72,12 @@ const Acl = () => {
         const fetchData = async () => {
             const clusterResponse = await remoteApi.getClusterList();
             if (clusterResponse.status === 0 && clusterResponse.data) {
-                const { clusterInfo } = clusterResponse.data;
+                const {clusterInfo} = clusterResponse.data;
                 setClusterData(clusterInfo); // Store the entire clusterInfo
 
                 // Populate cluster names for the first dropdown
                 const clusterNames = Object.keys(clusterInfo?.clusterAddrTable || {});
-                setClusterNamesOptions(clusterNames.map(name => ({ label: name, value: name })));
+                setClusterNamesOptions(clusterNames.map(name => ({label: name, value: name})));
 
                 // Set initial selections if clusters are available
                 if (clusterNames.length > 0) {
@@ -118,10 +102,10 @@ const Acl = () => {
                 console.error('Failed to fetch cluster list:', clusterResponse.errMsg);
             }
         };
-        if(!clusterData){
+        if (!clusterData) {
             fetchData();
         }
-        if(brokerAddress){
+        if (brokerAddress) {
             // Call fetchUsers or fetchAcls based on activeTab initially
             if (activeTab === 'users') {
                 fetchUsers();
@@ -139,7 +123,7 @@ const Acl = () => {
             return;
         }
         const brokersInCluster = info.clusterAddrTable[clusterName] || [];
-        setBrokerNamesOptions(brokersInCluster.map(broker => ({ label: broker, value: broker })));
+        setBrokerNamesOptions(brokersInCluster.map(broker => ({label: broker, value: broker})));
     };
 
     // --- Event Handlers ---
@@ -186,7 +170,7 @@ const Acl = () => {
         }
         const invalidIps = value.filter(ip => !ipRegex.test(ip));
         if (invalidIps.length > 0) {
-            return Promise.reject(t.INVALID_IP_ADDRESSES +"ips:" + invalidIps.join(', '));
+            return Promise.reject(t.INVALID_IP_ADDRESSES + "ips:" + invalidIps.join(', '));
         }
         return Promise.resolve();
     };
@@ -204,7 +188,7 @@ const Acl = () => {
                 }));
                 setUserListData(formattedUsers);
             } else {
-                messageApi.error(t.GET_USERS_FAILED+result?.errMsg);
+                messageApi.error(t.GET_USERS_FAILED + result?.errMsg);
             }
         } catch (error) {
             console.error("Failed to fetch users:", error);
@@ -373,7 +357,7 @@ const Acl = () => {
                 messageApi.success(t.ACL_DELETE_SUCCESS);
                 fetchAcls();
             } else {
-                messageApi.error(t.ACL_DELETE_FAILED+result.errMsg);
+                messageApi.error(t.ACL_DELETE_FAILED + result.errMsg);
             }
         } catch (error) {
             console.error("Failed to delete ACL:", error);
@@ -410,7 +394,7 @@ const Acl = () => {
                     setIsAclModalVisible(false);
                     fetchAcls(brokerAddress);
                 } else {
-                    messageApi.error(t.ACL_UPDATE_FAILED+result.errMsg);
+                    messageApi.error(t.ACL_UPDATE_FAILED + result.errMsg);
                 }
                 setIsUpdate(false)
             } else {
@@ -421,7 +405,7 @@ const Acl = () => {
                     setIsAclModalVisible(false);
                     fetchAcls(brokerAddress);
                 } else {
-                    messageApi.error(t.ACL_CREATE_FAILED+result.errMsg);
+                    messageApi.error(t.ACL_CREATE_FAILED + result.errMsg);
                 }
             }
 
@@ -469,9 +453,9 @@ const Acl = () => {
                 {showPassword ? text : '********'}
                     <Button
                         type="link"
-                        icon={showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                        icon={showPassword ? <EyeInvisibleOutlined/> : <EyeOutlined/>}
                         onClick={() => setShowPassword(!showPassword)}
-                        style={{ marginLeft: 8 }}
+                        style={{marginLeft: 8}}
                     >
                     {showPassword ? t.HIDE : t.VIEW}
                 </Button>
@@ -488,7 +472,7 @@ const Acl = () => {
             dataIndex: 'userStatus',
             key: 'userStatus',
             render: (status) => (
-                <Tag color={status=== 'enable' ? 'green' : 'red'}>{status}</Tag>
+                <Tag color={status === 'enable' ? 'green' : 'red'}>{status}</Tag>
             ),
         },
         {
@@ -496,14 +480,14 @@ const Acl = () => {
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button icon={<EditOutlined />} onClick={() => handleEditUser(record)}>{t.MODIFY}</Button>
+                    <Button icon={<EditOutlined/>} onClick={() => handleEditUser(record)}>{t.MODIFY}</Button>
                     <Popconfirm
                         title={t.CONFIRM_DELETE_USER}
                         onConfirm={() => handleDeleteUser(record.username)}
                         okText={t.YES}
                         cancelText={t.NO}
                     >
-                        <Button icon={<DeleteOutlined />} danger>{t.DELETE}</Button>
+                        <Button icon={<DeleteOutlined/>} danger>{t.DELETE}</Button>
                     </Popconfirm>
                 </Space>
             ),
@@ -553,247 +537,247 @@ const Acl = () => {
             key: 'action',
             render: (_, record) => (
                 <Space size="middle">
-                    <Button icon={<EditOutlined />} onClick={() => handleEditAcl(record)}>{t.MODIFY}</Button>
+                    <Button icon={<EditOutlined/>} onClick={() => handleEditAcl(record)}>{t.MODIFY}</Button>
                     <Popconfirm
                         title={t.CONFIRM_DELETE_ACL}
                         onConfirm={() => handleDeleteAcl(record.subject, record.resource)}
                         okText={t.YES}
                         cancelText={t.NO}
                     >
-                        <Button icon={<DeleteOutlined />} danger>{t.DELETE}</Button>
+                        <Button icon={<DeleteOutlined/>} danger>{t.DELETE}</Button>
                     </Popconfirm>
                 </Space>
             ),
         },
     ];
 
-return (
-    <>
-        {msgContextHolder}
-        <div style={{padding: 24}}>
-            <h2>{t.ACL_MANAGEMENT}</h2>
+    return (
+        <>
+            {msgContextHolder}
+            <div style={{padding: 24}}>
+                <h2>{t.ACL_MANAGEMENT}</h2>
 
-            <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
-                <Form.Item label={t.PLEASE_SELECT_CLUSTER} style={{ marginBottom: 0 }}>
-                    <Select
-                        placeholder={t.PLEASE_SELECT_CLUSTER}
-                        style={{ width: 200 }}
-                        onChange={handleClusterChange}
-                        value={selectedCluster}
-                        options={clusterNamesOptions}
-                    />
-                </Form.Item>
-                <Form.Item label={t.PLEASE_SELECT_BROKER} style={{ marginBottom: 0 }}>
-                    <Select
-                        placeholder={t.PLEASE_SELECT_BROKER}
-                        style={{ width: 200 }}
-                        onChange={handleBrokerChange}
-                        value={selectedBroker}
-                        options={brokerNamesOptions} // Now dynamically updated
-                        disabled={!selectedCluster} // Disable broker selection if no cluster is chosen
-                    />
-                </Form.Item>
-                <Button type="primary" onClick={activeTab === 'users' ? fetchUsers : fetchAcls}>
-                    {t.CONFIRM}
-                </Button>
-            </div>
-
-            <Tabs activeKey={activeTab} onChange={setActiveTab}>
-                <TabPane tab={t.ACL_USERS} key="users"/>
-                <TabPane tab={t.ACL_PERMISSIONS} key="acls"/>
-            </Tabs>
-
-            <div style={{marginBottom: 16, display: 'flex', justifyContent: 'space-between'}}>
-                <Button type="primary" onClick={activeTab === 'users' ? handleAddUser : handleAddAcl}>
-                    {activeTab === 'users' ? t.ADD_USER : t.ADD_ACL_PERMISSION}
-                </Button>
-                <Search
-                    placeholder={t.SEARCH_PLACEHOLDER}
-                    allowClear
-                    onSearch={handleSearch}
-                    style={{width: 300}}
-                />
-            </div>
-
-            {activeTab === 'users' && (
-                <Table
-                    columns={userColumns}
-                    dataSource={userListData}
-                    loading={loading}
-                    pagination={{pageSize: 10}}
-                    rowKey="username"
-                />
-            )}
-
-            {activeTab === 'acls' && (
-                <Table
-                    columns={aclColumns}
-                    dataSource={aclListData}
-                    loading={loading}
-                    pagination={{pageSize: 10}}
-                    rowKey="key"
-                />
-            )}
-
-            {/* User Management Modal */}
-            <Modal
-                title={currentUser ? t.EDIT_USER : t.ADD_USER}
-                visible={isUserModalVisible}
-                onOk={handleUserModalOk}
-                onCancel={() => setIsUserModalVisible(false)}
-                confirmLoading={loading}
-                footer={[
-                    <Button key="cancel" onClick={() => setIsUserModalVisible(false)}>
-                        {t.CANCEL}
-                    </Button>,
-                    <Button key="submit" type="primary" onClick={handleUserModalOk} loading={loading}>
-                        {t.CONFIRM}
-                    </Button>,
-                ]}
-            >
-                <Form
-                    form={userForm}
-                    layout="vertical"
-                    name="user_form"
-                    initialValues={{userStatus: 'enable'}}
-                >
-                    <Form.Item
-                        name="username"
-                        label={t.USERNAME}
-                        rules={[{required: true, message: t.PLEASE_ENTER_USERNAME}]}
-                    >
-                        <Input disabled={!!currentUser}/>
-                    </Form.Item>
-                    <Form.Item
-                        name="password"
-                        label={t.PASSWORD}
-                        rules={[{required: !currentUser, message: t.PLEASE_ENTER_PASSWORD}]}
-                    >
-                        <Input.Password
-                            placeholder={t.PASSWORD}
-                            iconRender={visible => (visible ? <EyeOutlined/> : <EyeInvisibleOutlined/>)}
+                <div style={{marginBottom: 16, display: 'flex', gap: 16}}>
+                    <Form.Item label={t.PLEASE_SELECT_CLUSTER} style={{marginBottom: 0}}>
+                        <Select
+                            placeholder={t.PLEASE_SELECT_CLUSTER}
+                            style={{width: 200}}
+                            onChange={handleClusterChange}
+                            value={selectedCluster}
+                            options={clusterNamesOptions}
                         />
                     </Form.Item>
-                    <Form.Item
-                        name="userType"
-                        label={t.USER_TYPE}
-                        rules={[{required: true, message: t.PLEASE_SELECT_USER_TYPE}]}
-                    >
-                        <Select mode="single" placeholder="Super, Normal" style={{width: '100%'}}>
-                            <Select.Option value="Super">Super</Select.Option>
-                            <Select.Option value="Normal">Normal</Select.Option>
-                        </Select>
-                    </Form.Item>
-                    <Form.Item
-                        name="userStatus"
-                        label={t.USER_STATUS}
-                        rules={[{required: true, message: t.PLEASE_SELECT_USER_STATUS}]}
-                    >
-                        <Select mode="single" placeholder="enable, disable" style={{width: '100%'}}>
-                            <Select.Option value="enable">enable</Select.Option>
-                            <Select.Option value="disable">disable</Select.Option>
-                        </Select>
-                    </Form.Item>
-                </Form>
-            </Modal>
-
-            {/* ACL Permission Management Modal */}
-            <Modal
-                title={currentAcl ? t.EDIT_ACL_PERMISSION : t.ADD_ACL_PERMISSION}
-                visible={isAclModalVisible}
-                onOk={handleAclModalOk}
-                onCancel={() => setIsAclModalVisible(false)}
-                confirmLoading={loading}
-            >
-                <Form
-                    form={aclForm}
-                    layout="vertical"
-                    name="acl_form"
-                >
-                    <Form.Item
-                        name="subject"
-                        label={t.SUBJECT_LABEL}
-                        rules={[{required: true, message: t.PLEASE_ENTER_SUBJECT}]}
-                    >
-                        <SubjectInput disabled={!!currentAcl}/>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="policyType"
-                        label={t.POLICY_TYPE}
-                        rules={[{required: true, message: t.PLEASE_ENTER_POLICY_TYPE}]}
-                    >
-                        <Select mode="single" disabled={isUpdate} placeholder="policyType" style={{width: '100%'}}>
-                            <Select.Option value="Custom">Custom</Select.Option>
-                            <Select.Option value="Default">Default</Select.Option>
-                        </Select>
-                    </Form.Item>
-
-                    <Form.Item
-                        name="resource"
-                        label={t.RESOURCE}
-                        rules={[{required: true, message: t.PLEASE_ADD_RESOURCE}]}
-                    >
-                        {isUpdate ? (
-                            <Input disabled={isUpdate}/>
-                        ) : (
-                            <ResourceInput/>
-                        )}
-                    </Form.Item>
-
-                    <Form.Item
-                        name="actions"
-                        label={t.OPERATION_TYPE}
-                    >
-                        <Select mode="multiple" placeholder="action" style={{width: '100%'}}>
-                            <Select.Option value="All">All</Select.Option>
-                            <Select.Option value="Pub">Pub</Select.Option>
-                            <Select.Option value="Sub">Sub</Select.Option>
-                            <Select.Option value="Create">Create</Select.Option>
-                            <Select.Option value="Update">Update</Select.Option>
-                            <Select.Option value="Delete">Delete</Select.Option>
-                            <Select.Option value="Get">Get</Select.Option>
-                            <Select.Option value="List">List</Select.Option>
-                        </Select>
-                    </Form.Item>
-                    <Form.Item
-                        name="sourceIps"
-                        label={t.SOURCE_IP}
-                        rules={[
-                            {
-                                validator: validateIp,
-                            },
-                        ]}
-                    >
+                    <Form.Item label={t.PLEASE_SELECT_BROKER} style={{marginBottom: 0}}>
                         <Select
-                            mode="tags"
-                            style={{width: '100%'}}
-                            placeholder={t.ENTER_IP_HINT}
-                            onChange={handleIpChange}
-                            onDeselect={handleIpDeselect}
-                            value={ips}
-                            tokenSeparators={[',', ' ']}
-                        >
-                            <Select.Option value="192.168.1.1">192.168.1.1</Select.Option>
-                            <Select.Option value="0.0.0.0">0.0.0.0</Select.Option>
-                            <Select.Option value="127.0.0.1">127.0.0.1</Select.Option>
-                        </Select>
+                            placeholder={t.PLEASE_SELECT_BROKER}
+                            style={{width: 200}}
+                            onChange={handleBrokerChange}
+                            value={selectedBroker}
+                            options={brokerNamesOptions} // Now dynamically updated
+                            disabled={!selectedCluster} // Disable broker selection if no cluster is chosen
+                        />
                     </Form.Item>
-                    <Form.Item
-                        name="decision"
-                        label={t.DECISION}
-                        rules={[{required: true, message: t.PLEASE_ENTER_DECISION}]}
+                    <Button type="primary" onClick={activeTab === 'users' ? fetchUsers : fetchAcls}>
+                        {t.CONFIRM}
+                    </Button>
+                </div>
+
+                <Tabs activeKey={activeTab} onChange={setActiveTab}>
+                    <TabPane tab={t.ACL_USERS} key="users"/>
+                    <TabPane tab={t.ACL_PERMISSIONS} key="acls"/>
+                </Tabs>
+
+                <div style={{marginBottom: 16, display: 'flex', justifyContent: 'space-between'}}>
+                    <Button type="primary" onClick={activeTab === 'users' ? handleAddUser : handleAddAcl}>
+                        {activeTab === 'users' ? t.ADD_USER : t.ADD_ACL_PERMISSION}
+                    </Button>
+                    <Search
+                        placeholder={t.SEARCH_PLACEHOLDER}
+                        allowClear
+                        onSearch={handleSearch}
+                        style={{width: 300}}
+                    />
+                </div>
+
+                {activeTab === 'users' && (
+                    <Table
+                        columns={userColumns}
+                        dataSource={userListData}
+                        loading={loading}
+                        pagination={{pageSize: 10}}
+                        rowKey="username"
+                    />
+                )}
+
+                {activeTab === 'acls' && (
+                    <Table
+                        columns={aclColumns}
+                        dataSource={aclListData}
+                        loading={loading}
+                        pagination={{pageSize: 10}}
+                        rowKey="key"
+                    />
+                )}
+
+                {/* User Management Modal */}
+                <Modal
+                    title={currentUser ? t.EDIT_USER : t.ADD_USER}
+                    visible={isUserModalVisible}
+                    onOk={handleUserModalOk}
+                    onCancel={() => setIsUserModalVisible(false)}
+                    confirmLoading={loading}
+                    footer={[
+                        <Button key="cancel" onClick={() => setIsUserModalVisible(false)}>
+                            {t.CANCEL}
+                        </Button>,
+                        <Button key="submit" type="primary" onClick={handleUserModalOk} loading={loading}>
+                            {t.CONFIRM}
+                        </Button>,
+                    ]}
+                >
+                    <Form
+                        form={userForm}
+                        layout="vertical"
+                        name="user_form"
+                        initialValues={{userStatus: 'enable'}}
                     >
-                        <Select mode="single" placeholder="Allow, Deny" style={{width: '100%'}}>
-                            <Select.Option value="Allow">Allow</Select.Option>
-                            <Select.Option value="Deny">Deny</Select.Option>
-                        </Select>
-                    </Form.Item>
-                </Form>
-            </Modal>
-        </div>
-    </>
-);
+                        <Form.Item
+                            name="username"
+                            label={t.USERNAME}
+                            rules={[{required: true, message: t.PLEASE_ENTER_USERNAME}]}
+                        >
+                            <Input disabled={!!currentUser}/>
+                        </Form.Item>
+                        <Form.Item
+                            name="password"
+                            label={t.PASSWORD}
+                            rules={[{required: !currentUser, message: t.PLEASE_ENTER_PASSWORD}]}
+                        >
+                            <Input.Password
+                                placeholder={t.PASSWORD}
+                                iconRender={visible => (visible ? <EyeOutlined/> : <EyeInvisibleOutlined/>)}
+                            />
+                        </Form.Item>
+                        <Form.Item
+                            name="userType"
+                            label={t.USER_TYPE}
+                            rules={[{required: true, message: t.PLEASE_SELECT_USER_TYPE}]}
+                        >
+                            <Select mode="single" placeholder="Super, Normal" style={{width: '100%'}}>
+                                <Select.Option value="Super">Super</Select.Option>
+                                <Select.Option value="Normal">Normal</Select.Option>
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="userStatus"
+                            label={t.USER_STATUS}
+                            rules={[{required: true, message: t.PLEASE_SELECT_USER_STATUS}]}
+                        >
+                            <Select mode="single" placeholder="enable, disable" style={{width: '100%'}}>
+                                <Select.Option value="enable">enable</Select.Option>
+                                <Select.Option value="disable">disable</Select.Option>
+                            </Select>
+                        </Form.Item>
+                    </Form>
+                </Modal>
+
+                {/* ACL Permission Management Modal */}
+                <Modal
+                    title={currentAcl ? t.EDIT_ACL_PERMISSION : t.ADD_ACL_PERMISSION}
+                    visible={isAclModalVisible}
+                    onOk={handleAclModalOk}
+                    onCancel={() => setIsAclModalVisible(false)}
+                    confirmLoading={loading}
+                >
+                    <Form
+                        form={aclForm}
+                        layout="vertical"
+                        name="acl_form"
+                    >
+                        <Form.Item
+                            name="subject"
+                            label={t.SUBJECT_LABEL}
+                            rules={[{required: true, message: t.PLEASE_ENTER_SUBJECT}]}
+                        >
+                            <SubjectInput disabled={!!currentAcl}/>
+                        </Form.Item>
+
+                        <Form.Item
+                            name="policyType"
+                            label={t.POLICY_TYPE}
+                            rules={[{required: true, message: t.PLEASE_ENTER_POLICY_TYPE}]}
+                        >
+                            <Select mode="single" disabled={isUpdate} placeholder="policyType" style={{width: '100%'}}>
+                                <Select.Option value="Custom">Custom</Select.Option>
+                                <Select.Option value="Default">Default</Select.Option>
+                            </Select>
+                        </Form.Item>
+
+                        <Form.Item
+                            name="resource"
+                            label={t.RESOURCE}
+                            rules={[{required: true, message: t.PLEASE_ADD_RESOURCE}]}
+                        >
+                            {isUpdate ? (
+                                <Input disabled={isUpdate}/>
+                            ) : (
+                                <ResourceInput/>
+                            )}
+                        </Form.Item>
+
+                        <Form.Item
+                            name="actions"
+                            label={t.OPERATION_TYPE}
+                        >
+                            <Select mode="multiple" placeholder="action" style={{width: '100%'}}>
+                                <Select.Option value="All">All</Select.Option>
+                                <Select.Option value="Pub">Pub</Select.Option>
+                                <Select.Option value="Sub">Sub</Select.Option>
+                                <Select.Option value="Create">Create</Select.Option>
+                                <Select.Option value="Update">Update</Select.Option>
+                                <Select.Option value="Delete">Delete</Select.Option>
+                                <Select.Option value="Get">Get</Select.Option>
+                                <Select.Option value="List">List</Select.Option>
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="sourceIps"
+                            label={t.SOURCE_IP}
+                            rules={[
+                                {
+                                    validator: validateIp,
+                                },
+                            ]}
+                        >
+                            <Select
+                                mode="tags"
+                                style={{width: '100%'}}
+                                placeholder={t.ENTER_IP_HINT}
+                                onChange={handleIpChange}
+                                onDeselect={handleIpDeselect}
+                                value={ips}
+                                tokenSeparators={[',', ' ']}
+                            >
+                                <Select.Option value="192.168.1.1">192.168.1.1</Select.Option>
+                                <Select.Option value="0.0.0.0">0.0.0.0</Select.Option>
+                                <Select.Option value="127.0.0.1">127.0.0.1</Select.Option>
+                            </Select>
+                        </Form.Item>
+                        <Form.Item
+                            name="decision"
+                            label={t.DECISION}
+                            rules={[{required: true, message: t.PLEASE_ENTER_DECISION}]}
+                        >
+                            <Select mode="single" placeholder="Allow, Deny" style={{width: '100%'}}>
+                                <Select.Option value="Allow">Allow</Select.Option>
+                                <Select.Option value="Deny">Deny</Select.Option>
+                            </Select>
+                        </Form.Item>
+                    </Form>
+                </Modal>
+            </div>
+        </>
+    );
 }
 
 export default Acl;

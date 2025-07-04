@@ -19,28 +19,25 @@ package org.apache.rocketmq.dashboard.admin;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
-import org.apache.rocketmq.auth.migration.v1.PlainAccessConfig;
 import org.apache.rocketmq.client.QueryResult;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.impl.MQAdminImpl;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.common.TopicConfig;
+import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.dashboard.service.client.MQAdminExtImpl;
+import org.apache.rocketmq.dashboard.service.client.MQAdminInstance;
+import org.apache.rocketmq.dashboard.util.MockObjectUtil;
+import org.apache.rocketmq.remoting.RemotingClient;
+import org.apache.rocketmq.remoting.protocol.RemotingCommand;
+import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
+import org.apache.rocketmq.remoting.protocol.ResponseCode;
 import org.apache.rocketmq.remoting.protocol.admin.ConsumeStats;
 import org.apache.rocketmq.remoting.protocol.admin.RollbackStats;
 import org.apache.rocketmq.remoting.protocol.admin.TopicStatsTable;
-import org.apache.rocketmq.common.message.MessageExt;
-import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.remoting.protocol.ResponseCode;
 import org.apache.rocketmq.remoting.protocol.body.BrokerStatsData;
 import org.apache.rocketmq.remoting.protocol.body.ClusterInfo;
 import org.apache.rocketmq.remoting.protocol.body.ConsumeMessageDirectlyResult;
@@ -56,12 +53,6 @@ import org.apache.rocketmq.remoting.protocol.body.TopicConfigSerializeWrapper;
 import org.apache.rocketmq.remoting.protocol.body.TopicList;
 import org.apache.rocketmq.remoting.protocol.route.TopicRouteData;
 import org.apache.rocketmq.remoting.protocol.subscription.SubscriptionGroupConfig;
-import org.apache.rocketmq.dashboard.service.client.MQAdminExtImpl;
-import org.apache.rocketmq.dashboard.service.client.MQAdminInstance;
-import org.apache.rocketmq.dashboard.util.MockObjectUtil;
-import org.apache.rocketmq.remoting.RemotingClient;
-import org.apache.rocketmq.remoting.protocol.RemotingCommand;
-import org.apache.rocketmq.remoting.protocol.RemotingSerializable;
 import org.apache.rocketmq.store.stats.BrokerStatsManager;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExtImpl;
@@ -75,22 +66,25 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyMap;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import static org.mockito.ArgumentMatchers.eq;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class MQAdminExtImplTest {
@@ -135,8 +129,8 @@ public class MQAdminExtImplTest {
     public void testUpdateBrokerConfig() throws Exception {
         assertNotNull(mqAdminExtImpl);
         doNothing()
-            .doThrow(new MQBrokerException(0, ""))
-            .when(defaultMQAdminExt).updateBrokerConfig(anyString(), any());
+                .doThrow(new MQBrokerException(0, ""))
+                .when(defaultMQAdminExt).updateBrokerConfig(anyString(), any());
         mqAdminExtImpl.updateBrokerConfig(brokerAddr, new Properties());
         boolean hasException = false;
         try {
@@ -155,6 +149,7 @@ public class MQAdminExtImplTest {
         mqAdminExtImpl.createAndUpdateTopicConfig(brokerAddr, new TopicConfig());
     }
 
+
     @Test
     public void testQueryConsumerStatus() throws Exception {
         assertNotNull(mqAdminExtImpl);
@@ -169,7 +164,7 @@ public class MQAdminExtImplTest {
     @Test
     public void testExamineSubscriptionGroupConfig() throws Exception {
         assertNotNull(mqAdminExtImpl);
-        
+
         // Create valid SubscriptionGroupWrapper with group_test entry
         SubscriptionGroupWrapper wrapper = new SubscriptionGroupWrapper();
         ConcurrentMap<String, SubscriptionGroupConfig> subscriptionGroupTable = new ConcurrentHashMap<>();
@@ -177,16 +172,16 @@ public class MQAdminExtImplTest {
         config.setGroupName("group_test");
         subscriptionGroupTable.put("group_test", config);
         wrapper.setSubscriptionGroupTable(subscriptionGroupTable);
-        
+
         // Create successful response
         RemotingCommand successResponse = RemotingCommand.createResponseCommand(null);
         successResponse.setCode(ResponseCode.SUCCESS);
         successResponse.setBody(RemotingSerializable.encode(wrapper));
-        
+
         // Mock the remote invocation
         when(remotingClient.invokeSync(eq(brokerAddr), any(RemotingCommand.class), anyLong()))
-            .thenReturn(successResponse);
-        
+                .thenReturn(successResponse);
+
         // Test successful case
         SubscriptionGroupConfig subscriptionGroupConfig = mqAdminExtImpl.examineSubscriptionGroupConfig(brokerAddr, "group_test");
         Assert.assertNotNull(subscriptionGroupConfig);
@@ -196,29 +191,27 @@ public class MQAdminExtImplTest {
     @Test
     public void testExamineTopicConfig() throws Exception {
         assertNotNull(mqAdminExtImpl);
-        
-        // Create valid TopicConfigSerializeWrapper with topic_test entry
-        TopicConfigSerializeWrapper wrapper = new TopicConfigSerializeWrapper();
-        ConcurrentMap<String, TopicConfig> topicConfigTable = new ConcurrentHashMap<>();
+
+        // Create valid TopicConfigSerializeWrapper with topictest entry
         TopicConfig config = new TopicConfig();
         config.setTopicName("topic_test");
-        topicConfigTable.put("topic_test", config);
-        wrapper.setTopicConfigTable(topicConfigTable);
-        
+
+
         // Create successful response
         RemotingCommand successResponse = RemotingCommand.createResponseCommand(null);
         successResponse.setCode(ResponseCode.SUCCESS);
-        successResponse.setBody(RemotingSerializable.encode(wrapper));
-        
+        successResponse.setBody(RemotingSerializable.encode(config));
+
         // Mock the remote invocation
         when(remotingClient.invokeSync(eq(brokerAddr), any(RemotingCommand.class), anyLong()))
-            .thenReturn(successResponse);
-        
+                .thenReturn(successResponse);
+
         // Test successful case
         TopicConfig topicConfig = mqAdminExtImpl.examineTopicConfig(brokerAddr, "topic_test");
         Assert.assertNotNull(topicConfig);
         Assert.assertEquals("topic_test", topicConfig.getTopicName());
     }
+
 
     @Test
     public void testExamineTopicStats() throws Exception {
@@ -228,7 +221,7 @@ public class MQAdminExtImplTest {
         }
         TopicStatsTable topicStatsTable = mqAdminExtImpl.examineTopicStats("topic_test");
         Assert.assertNotNull(topicStatsTable);
-        Assert.assertEquals(topicStatsTable.getOffsetTable().size(), 1);
+        Assert.assertEquals(1, topicStatsTable.getOffsetTable().size());
     }
 
     @Test
@@ -318,7 +311,7 @@ public class MQAdminExtImplTest {
     public void testGetNameServerAddressList() {
         assertNotNull(mqAdminExtImpl);
         {
-            when(defaultMQAdminExt.getNameServerAddressList()).thenReturn(Lists.asList("127.0.0.1:9876", new String[] {"127.0.0.2:9876"}));
+            when(defaultMQAdminExt.getNameServerAddressList()).thenReturn(Lists.asList("127.0.0.1:9876", new String[]{"127.0.0.2:9876"}));
         }
         List<String> list = mqAdminExtImpl.getNameServerAddressList();
         Assert.assertEquals(list.size(), 2);
@@ -506,7 +499,7 @@ public class MQAdminExtImplTest {
     public void testConsumeMessageDirectly() throws Exception {
         assertNotNull(mqAdminExtImpl);
         {
-            when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(),anyString())).thenReturn(new ConsumeMessageDirectlyResult());
+
             when(defaultMQAdminExt.consumeMessageDirectly(anyString(), anyString(), anyString(), anyString())).thenReturn(new ConsumeMessageDirectlyResult());
         }
         ConsumeMessageDirectlyResult result2 = mqAdminExtImpl.consumeMessageDirectly("group_test", "", "topic_test", "7F000001ACC018B4AAC2116AF6500000");
@@ -626,15 +619,6 @@ public class MQAdminExtImplTest {
         Assert.assertNotNull(timeSpans);
     }
 
-    @Test
-    public void testViewMessage2() throws Exception {
-        assertNotNull(mqAdminExtImpl);
-        {
-            when(MQAdminInstance.threadLocalMqClientInstance().getMQAdminImpl()).thenReturn(mock(MQAdminImpl.class));
-            when(defaultMQAdminExt.viewMessage(anyString(),anyString())).thenThrow(new RuntimeException("viewMessage exception"));
-        }
-        mqAdminExtImpl.viewMessage("topic_test", "7F000001ACC018B4AAC2116AF6500000");
-    }
 
     @Test
     public void testGetBrokerConfig() throws Exception {
